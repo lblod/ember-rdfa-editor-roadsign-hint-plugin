@@ -1,5 +1,5 @@
 {
-  "name": "ember-rdfa-editor-roadsign-hint-plugin",
+  "name": "@redpencilio/ember-rdfa-editor-roadsign-hint-plugin",
   "version": "0.0.0",
   "description": "The default blueprint for ember-cli addons.",
   "keywords": [
@@ -7,7 +7,7 @@
   ],
   "repository": "",
   "license": "MIT",
-  "author": "",
+  "author": "redpencil.io",
   "directories": {
     "doc": "doc",
     "test": "tests"
