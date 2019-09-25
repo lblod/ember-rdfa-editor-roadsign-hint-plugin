@@ -1,7 +1,9 @@
+/* eslint-disable require-yield */
 import { getOwner } from '@ember/application';
 import Service from '@ember/service';
 import EmberObject, { computed } from '@ember/object';
 import { task } from 'ember-concurrency';
+import { A }  from '@ember/array';
 
 /**
  * Service responsible for correct annotation of dates
@@ -15,7 +17,11 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
   init(){
     this._super(...arguments);
-    const config = getOwner(this).resolveRegistration('config:environment');
+    getOwner(this).resolveRegistration('config:environment');
+
+    this.set('locn', 'http://www.w3.org/ns/locn#');
+    this.set('mobiliteit', 'https://data.vlaanderen.be/ns/mobiliteit#');
+    this.set('roadSigns', A([]));
   },
 
   /**
@@ -31,21 +37,36 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @public
    */
   execute: task(function * (hrId, contexts, hintsRegistry, editor) {
-    if (contexts.length === 0) return [];
+    this.detectRoadSigns(editor);
 
     const hints = [];
-    contexts.forEach((context) => {
-      let relevantContext = this.detectRelevantContext(context)
-      if (relevantContext) {
+    contexts
+      .filter(this.detectRelevantContext)
+      .forEach(context => {
         hintsRegistry.removeHintsInRegion(context.region, hrId, this.get('who'));
         hints.pushObjects(this.generateHintsForContext(context));
-      }
-    });
+      });
     const cards = hints.map( (hint) => this.generateCard(hrId, hintsRegistry, editor, hint));
-    if(cards.length > 0){
+    if (cards.length > 0) {
       hintsRegistry.addHints(hrId, this.get('who'), cards);
     }
   }),
+
+  detectRoadSigns (editor) {
+    const triples = editor.triplesDefinedInResource('http://data.lblod.info/besluiten/27caf2c3-3254-440e-a669-396b986b66ae');
+    const signTriples = triples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Verkeersteken`);
+
+    for (let { subject } of signTriples) {
+      const board = triples.find (t => t.predicate === `${this.mobiliteit}realiseert` && t.object === subject).subject;
+      const opstelling = triples.find (t => t.predicate === `${this.mobiliteit}omvatVerkeersbord` && t.object === board).subject;
+      const location = triples.find (t => t.subject === opstelling &&  t.predicate === `${this.locn}geometry`).subject;
+
+      this.roadSigns.pushObject(EmberObject.create({
+        sign: subject,
+        location: location
+      }));
+    }
+  },
 
   /**
    * Given context object, tries to detect a context the plugin can work on
