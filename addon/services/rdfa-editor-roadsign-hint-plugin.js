@@ -14,6 +14,17 @@ import { A }  from '@ember/array';
  * @extends EmberService
  */
 const RdfaEditorRoadsignHintPlugin = Service.extend({
+  /**
+   * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
+   */
+  unreferencedRoadsigns: computed ('roadsigns.[]', 'info.editor', function() {
+    const triples = this.editor.triplesDefinedInResource( this.besluitUri );
+
+    return this.roadsigns.filter (sign => {
+      const regel = triples.find (t => t.predicate === `${this.mobiliteit}wordtAangeduidDoor` && t.object === sign.sign);
+      return !regel || !triples.some (t => t.predicate === `${this.mobiliteit}heeftMobiliteitsMaatregel` && t.object === regel);
+    });
+  }),
 
   init(){
     this._super(...arguments);
