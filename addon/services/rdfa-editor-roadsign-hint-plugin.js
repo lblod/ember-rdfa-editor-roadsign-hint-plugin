@@ -19,9 +19,11 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     this._super(...arguments);
     getOwner(this).resolveRegistration('config:environment');
 
+    this.set('besluit', 'http://data.vlaanderen.be/ns/besluit#');
+    this.set('geosparql', 'http://www.opengis.net/ont/geosparql#');
     this.set('locn', 'http://www.w3.org/ns/locn#');
     this.set('mobiliteit', 'https://data.vlaanderen.be/ns/mobiliteit#');
-    this.set('roadSigns', A([]));
+    this.set('roadsigns', A([]));
   },
 
   /**
@@ -37,7 +39,8 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @public
    */
   execute: task(function * (hrId, contexts, hintsRegistry, editor) {
-    this.detectRoadSigns(editor);
+    this.set ( 'editor', editor );
+    this.set ( 'besluitUris', this.detectBesluits(contexts) );
 
     const hints = [];
     contexts
@@ -66,6 +69,17 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
         location: location
       }));
     }
+  },
+
+  detectBesluits (contexts) {
+    const besluitUris = contexts
+      .filter (context => {
+        const triple = context.context.slice(-2)[0];
+        return triple.predicate === 'a' && triple.object === `${this.besluit}Besluit`;
+      })
+      .map (context => context.context.slice(-1)[0].subject);
+
+    return [...new Set(besluitUris)];
   },
 
   /**
