@@ -50,7 +50,7 @@ export default Component.extend({
     insert(){
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
       const mappedLocation = this.get('hintsRegistry').updateLocationToCurrentIndex(this.get('hrId'), this.get('location'));
-      this.get('editor').replaceTextWithHTML(...mappedLocation, this.get('info').htmlString);
+      // this.get('editor').replaceTextWithHTML(...mappedLocation, this.get('info').htmlString);
     }
   }
 });
