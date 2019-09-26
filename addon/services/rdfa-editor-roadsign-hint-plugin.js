@@ -55,12 +55,14 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     this.detectRoadsigns();
 
     const hints = [];
+
     contexts
-      .filter(this.detectRelevantContext)
-      .forEach(context => {
+      .filter( context => this.detectRelevantContext(context) )
+      .forEach( context => {
         hintsRegistry.removeHintsInRegion(context.region, hrId, this.get('who'));
         hints.pushObjects(this.generateHintsForContext(context));
       });
+
     const cards = hints.map( (hint) => this.generateCard(hrId, hintsRegistry, editor, hint));
     if (cards.length > 0) {
       hintsRegistry.addHints(hrId, this.get('who'), cards);
@@ -113,10 +115,11 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @private
    */
   detectRelevantContext(context){
-    return context.text.toLowerCase().indexOf('hello') >= 0;
+    const types = context.context.filter (item => item.predicate === 'a');
+
+    return types.some(t => t.object === `${this.besluit}Besluit`) &&
+           !types.some(t => t.object === `${this.mobiliteit}Opstelling`);
   },
-
-
 
   /**
    * Maps location of substring back within reference location
