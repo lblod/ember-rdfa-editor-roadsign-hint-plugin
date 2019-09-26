@@ -1,10 +1,34 @@
-<p class="u-spacer--tiny">{{info.label}} <br>
-  <strong>{{info.plainValue}}</strong>
-</p>
+<div class="modal-dialog__header">
+  <div class="grid">
+    <div class="col--10-12">
+      <p class="u-spacer--tiny">
+        <strong>Verkeersteken</strong>
+      </p>
+    </div>
+  </div>
+</div>
 
-{{#wu-button-group}}
-  {{wu-button label="Juist" size="small" isNarrow=true command="ctrl + j" commandLocation="below" onClick=(action "insert")}}
-  {{wu-button label="Negeer" size="tiny" isLink=true isDark=true isNarrow=true command="esc" commandLocation="below" onClick=null}}
-{{/wu-button-group}}
+<div class="modal-dialog__content">
+  <div class="bg-gray-300 p-2 text-black">
+    <ul class="w-full">
+      {{#each hintPlugin.unreferencedRoadsigns as |roadsign|}}
+        <li {{action (mut selectedRoadsign) roadsign}} role="button"
+          class="px-4 py-2 hover:bg-teal-600 hover:text-white w-full text-left rounded flex
+                 {{if (eq selectedRoadsign roadsign) "text-white bg-teal-600"}}">
+          {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
+        </li>
+      {{/each}}
+    </ul>
+  </div>
+</div>
+
+<div class="modal-dialog__footer">
+  {{#wu-button-group}}
+    {{wu-button label="Vervangen"
+      onClick=(action "insert")
+      command="ctrl + j"
+      commandLocation="below"}}
+  {{/wu-button-group}}
+</div>
 
 {{yield}}

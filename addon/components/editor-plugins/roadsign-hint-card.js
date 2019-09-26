@@ -1,6 +1,7 @@
 import { reads } from '@ember/object/computed';
 import Component from '@ember/component';
 import layout from '../../templates/components/editor-plugins/roadsign-hint-card';
+import { inject as service } from '@ember/service';
 
 /**
 * Card displaying a hint of the Date plugin
@@ -11,6 +12,7 @@ import layout from '../../templates/components/editor-plugins/roadsign-hint-card
 */
 export default Component.extend({
   layout,
+  hintPlugin: service('rdfa-editor-roadsign-hint-plugin'),
 
   /**
    * Region on which the card applies
