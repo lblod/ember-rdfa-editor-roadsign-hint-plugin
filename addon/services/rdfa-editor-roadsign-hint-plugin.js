@@ -41,6 +41,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
   execute: task(function * (hrId, contexts, hintsRegistry, editor) {
     this.set ( 'editor', editor );
     this.set ( 'besluitUris', this.detectBesluits(contexts) );
+    this.detectRoadsigns();
 
     const hints = [];
     contexts
@@ -55,19 +56,26 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     }
   }),
 
-  detectRoadSigns (editor) {
-    const triples = editor.triplesDefinedInResource('http://data.lblod.info/besluiten/27caf2c3-3254-440e-a669-396b986b66ae');
-    const signTriples = triples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Verkeersteken`);
+  detectRoadsigns () {
+    for (let besluitUri of this.besluitUris) {
+      const triples = this.editor.triplesDefinedInResource( besluitUri );
+      const roadsignTriples = triples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Verkeersteken`);
 
-    for (let { subject } of signTriples) {
-      const board = triples.find (t => t.predicate === `${this.mobiliteit}realiseert` && t.object === subject).subject;
-      const opstelling = triples.find (t => t.predicate === `${this.mobiliteit}omvatVerkeersbord` && t.object === board).subject;
-      const location = triples.find (t => t.subject === opstelling &&  t.predicate === `${this.locn}geometry`).subject;
+      for (let { subject } of roadsignTriples) {
+        const board       = triples.find (t => t.predicate === `${this.mobiliteit}realiseert`        && t.object === subject).subject;
+        const opstelling  = triples.find (t => t.predicate === `${this.mobiliteit}omvatVerkeersbord` && t.object === board).subject;
+        const location    = triples.find (t => t.subject   === opstelling && t.predicate === `${this.locn}geometry`).object;
+        const point       = triples.find (t => t.subject   === location   && t.predicate === `${this.geosparql}asWKT`).object;
+        const isBeginZone = triples.find (t => t.subject   === subject    && t.predicate === `${this.mobiliteit}isBeginZone`);
 
-      this.roadSigns.pushObject(EmberObject.create({
-        sign: subject,
-        location: location
-      }));
+        this.roadsigns.pushObject(EmberObject.create({
+          besluit: besluitUri,
+          isBeginZone: isBeginZone && isBeginZone.object,
+          location: location,
+          point: point,
+          sign: subject
+        }));
+      }
     }
   },
 
