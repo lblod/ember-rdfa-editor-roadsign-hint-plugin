@@ -14,17 +14,7 @@ import { A }  from '@ember/array';
  * @extends EmberService
  */
 const RdfaEditorRoadsignHintPlugin = Service.extend({
-  /**
-   * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
-   */
-  unreferencedRoadsigns: computed ('roadsigns.[]', 'info.editor', function() {
-    const triples = this.editor.triplesDefinedInResource( this.besluitUri );
 
-    return this.roadsigns.filter (sign => {
-      const regel = triples.find (t => t.predicate === `${this.mobiliteit}wordtAangeduidDoor` && t.object === sign.sign);
-      return !regel || !triples.some (t => t.predicate === `${this.mobiliteit}heeftMobiliteitsMaatregel` && t.object === regel);
-    });
-  }),
 
   init(){
     this._super(...arguments);
@@ -82,11 +72,11 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
         const isBeginZone = triples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}isBeginZone`);
 
         this.roadsigns.pushObject(EmberObject.create({
-          besluit: besluitUri,
+          besluitUri: besluitUri,
           isBeginZone: isBeginZone && isBeginZone.object,
           location: location,
           point: point,
-          sign: subject
+          uri: subject
         }));
       }
     }
@@ -157,6 +147,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
         label: this.get('who'),
         plainValue: hint.text,
         location: hint.location,
+        besluitUri: hint.context.context.find (c => c.predicate === 'a' && c.object === `${this.besluit}Besluit`).subject,
         hrId, hintsRegistry, editor
       },
       location: hint.location,

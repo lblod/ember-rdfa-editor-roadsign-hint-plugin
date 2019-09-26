@@ -11,9 +11,9 @@
 <div class="modal-dialog__content">
   <div class="bg-gray-300 p-2 text-black">
     <ul class="w-full">
-      {{#each hintPlugin.unreferencedRoadsigns as |roadsign|}}
+      {{#each unreferencedRoadsigns as |roadsign|}}
         <li {{action (mut selectedRoadsign) roadsign}} role="button"
-          class="px-4 py-2 hover:bg-teal-600 hover:text-white w-full text-left rounded flex
+          class="px-4 py-2 hover:bg-teal-600 hover:text-white w-full text-left rounded
                  {{if (eq selectedRoadsign roadsign) "text-white bg-teal-600"}}">
           {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
         </li>
