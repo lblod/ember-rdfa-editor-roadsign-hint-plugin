@@ -156,7 +156,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       info: {
         label: this.get('who'),
         plainValue: hint.text,
-        htmlString: '<b>hello world</b>',
         location: hint.location,
         hrId, hintsRegistry, editor
       },
@@ -177,11 +176,13 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @private
    */
   generateHintsForContext(context){
+    const triple = context.context.slice(-1)[0];
     const hints = [];
-    const index = context.text.toLowerCase().indexOf('hello');
-    const text = context.text.slice(index, index+5);
-    const location = this.normalizeLocation([index, index + 5], context.region);
-    hints.push({text, location});
+    const resource = triple.subject;
+    const text = context.text || '';
+    const location = context.region;
+    hints.push({ text, location, context, resource });
+
     return hints;
   }
 });
