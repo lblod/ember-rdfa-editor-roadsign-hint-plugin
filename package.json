@@ -1,11 +1,14 @@
 {
   "name": "@lblod/ember-rdfa-editor-roadsign-hint-plugin",
   "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "description": "The rdfa editor plugin which detects roadsigns and there state of being referenced by articles.",
   "keywords": [
     "ember-addon"
   ],
-  "repository": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lblod/ember-rdfa-editor-roadsign-hint-plugin.git"
+  },
   "license": "MIT",
   "author": "redpencil.io",
   "directories": {
