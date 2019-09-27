@@ -106,14 +106,15 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     return context.context.find(t =>
                                 t.object === `${this.besluit}AanvullendReglement`
                                 && t.predicate === 'a');
+    return context
+      .context
+      .find(t => t.object === `${this.besluit}AanvullendReglement` && t.predicate === 'a');
   },
 
   findUnreferencedRoadsigns(editor, besluitUri){
     const triples = editor.triplesDefinedInResource( besluitUri );
     const roadsigns  = this.detectRoadsigns(besluitUri, triples);
 
-    return types.some(t => t.object === `${this.besluit}Besluit`) &&
-           !types.some(t => t.object === `${this.mobiliteit}Opstelling`);
     return roadsigns
       .filter ( sign => sign.besluitUri === besluitUri)
       .filter ( sign => {
