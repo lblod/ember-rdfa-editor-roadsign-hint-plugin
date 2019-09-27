@@ -59,38 +59,36 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     }
   }),
 
-  detectRoadsigns () {
-    for (let besluitUri of this.besluitUris) {
-      const triples = this.editor.triplesDefinedInResource( besluitUri );
-      const roadsignTriples = triples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Verkeersteken`);
+  detectRoadsigns(besluitUri, besluitTriples) {
+    let roadsigns = A([]);
+    const roadsignTriples = besluitTriples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Verkeersteken`);
 
-      for (let { subject } of roadsignTriples) {
-
-        this.roadsigns.pushObject(EmberObject.create({
-          besluitUri: besluitUri,
-          isBeginZone: isBeginZone && isBeginZone.object,
-          location: location,
-          point: point,
-          uri: subject
-        }));
-      }
+    for (let { subject } of roadsignTriples) {
       const board = (besluitTriples.find(t => t.predicate === `${this.mobiliteit}realiseert` && t.object === subject) || {}).subject;
       const opstelling = (besluitTriples.find(t => t.predicate === `${this.mobiliteit}omvatVerkeersbord` && t.object === board) || {}).subject;
       const location = (besluitTriples.find(t => t.subject === opstelling && t.predicate === `${this.locn}geometry`) || {}).object;
       const point = (besluitTriples.find(t => t.subject === location && t.predicate === `${this.geosparql}asWKT`) || {}).object;
       const isBeginZone = besluitTriples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}isBeginZone`);
+
+      roadsigns.pushObject(EmberObject.create({
+        besluitUri: besluitUri,
+        isBeginZone: isBeginZone && isBeginZone.object,
+        location: location,
+        point: point,
+        uri: subject
+      }));
     }
+    return roadsigns;
   },
 
-  detectBesluits (contexts) {
-    const besluitUris = contexts
-      .filter (context => {
-        const triple = context.context.slice(-2)[0];
-        return triple.predicate === 'a' && triple.object === `${this.besluit}Besluit`;
-      })
-      .map (context => context.context.slice(-1)[0].subject);
-
-    return [...new Set(besluitUris)];
+  findHighestNodeForBesluit(richNode, besluitUri){
+    if(!richNode.parent)
+      return null;
+    if(!richNode.rdfaAttributes || !richNode.rdfaAttributes.typeof)
+      return this.findHighestNodeForBesluit(richNode.parent, besluitUri);
+    if(richNode.rdfaAttributes.typeof.includes(besluitUri))
+      return this.findHighestNodeForBesluit(richNode.parent, besluitUri);
+    return richNode;
   },
 
   /**
@@ -105,7 +103,11 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @private
    */
   detectRelevantContext(context){
-    const types = context.context.filter (item => item.predicate === 'a');
+    return context.context.find(t =>
+                                t.object === `${this.besluit}AanvullendReglement`
+                                && t.predicate === 'a');
+  },
+
   findUnreferencedRoadsigns(editor, besluitUri){
     const triples = editor.triplesDefinedInResource( besluitUri );
     const roadsigns  = this.detectRoadsigns(besluitUri, triples);
