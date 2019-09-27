@@ -68,7 +68,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
       //To avoid scattering of the hint (yellow on different places), we need to find, within the context path,
       // the highest node, so the whole besluit:AanvullendReglement is yellow as block.
-      let besluitBlock = this.findHighestNodeForBesluit(context.semanticNode, tripleAanvullendReglement.subject);
+      let besluitBlock = this.findHighestNodeForBesluit(context.semanticNode, `${this.besluit}AanvullendReglement`);
 
       let foundRegions = roadSignsPerBesluit[tripleAanvullendReglement.subject].regions;
 
@@ -108,13 +108,13 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     return roadsigns;
   },
 
-  findHighestNodeForBesluit(richNode, besluitUri){
+  findHighestNodeForBesluit(richNode, typeUri){
     if(!richNode.parent)
       return null;
     if(!richNode.rdfaAttributes || !richNode.rdfaAttributes.typeof)
-      return this.findHighestNodeForBesluit(richNode.parent, besluitUri);
-    if(richNode.rdfaAttributes.typeof.includes(besluitUri))
-      return this.findHighestNodeForBesluit(richNode.parent, besluitUri);
+      return this.findHighestNodeForBesluit(richNode.parent, typeUri);
+    if(!richNode.rdfaAttributes.typeof.includes(typeUri))
+      return this.findHighestNodeForBesluit(richNode.parent, typeUri);
     return richNode;
   },
 
