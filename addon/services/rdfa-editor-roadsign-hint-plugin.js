@@ -155,6 +155,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       });
   },
 
+
   /**
    * Maps location of substring back within reference location
    *
@@ -189,6 +190,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     return EmberObject.create({
       info: {
         label: this.get('who'),
+        unreferencedRoadsigns: hint.unreferencedRoadsigns,
         plainValue: hint.text,
         location: hint.location,
         besluitUri: hint.context.context.find (c => c.predicate === 'a' && c.object === `${this.besluit}Besluit`).subject,
@@ -210,13 +212,12 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    *
    * @private
    */
-  generateHintsForContext(context){
+  generateHintsForContext(context, location, unreferencedRoadsigns){
     const triple = context.context.slice(-1)[0];
     const hints = [];
     const resource = triple.subject;
     const text = context.text || '';
-    const location = context.region;
-    hints.push({ text, location, context, resource });
+    hints.push({ text, location, context, resource, unreferencedRoadsigns });
 
     return hints;
   }
