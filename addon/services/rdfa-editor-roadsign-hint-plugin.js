@@ -40,20 +40,48 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @public
    */
   execute: task(function * (hrId, contexts, hintsRegistry, editor) {
-    this.set ( 'editor', editor );
-    this.set ( 'besluitUris', this.detectBesluits(contexts) );
-    this.detectRoadsigns();
-
     const hints = [];
 
-    contexts
-      .filter( context => this.detectRelevantContext(context) )
-      .forEach( context => {
-        hintsRegistry.removeHintsInRegion(context.region, hrId, this.get('who'));
-        hints.pushObjects(this.generateHintsForContext(context));
-      });
+    // We only want to scan once for this subject, as the document won't have changed
+    // within the processing of the loop.
+    // We store the result in an intermediate variable, so this can be re-used in next iteration.
+    // It wil contain:
+    // { besluitUri : { newRoadSigns, regions }}
+    let roadSignsPerBesluit = {};
 
-    const cards = hints.map( (hint) => this.generateCard(hrId, hintsRegistry, editor, hint));
+    for(let context of contexts){
+      let tripleAanvullendReglement = this.detectRelevantContext(context);
+
+      if(!tripleAanvullendReglement){
+        continue;
+      }
+
+      let newRoadSigns = [];
+      if(roadSignsPerBesluit[tripleAanvullendReglement.subject]){
+        newRoadSigns = roadSignsPerBesluit[tripleAanvullendReglement.subject].newRoadSigns;
+      }
+      else {
+        newRoadSigns = this.findUnreferencedRoadsigns(editor, tripleAanvullendReglement.subject);
+        roadSignsPerBesluit[tripleAanvullendReglement.subject] = { newRoadSigns, regions: [] };
+      }
+
+      if(newRoadSigns.length === 0) continue;
+
+      //To avoid scattering of the hint (yellow on different places), we need to find, within the context path,
+      // the highest node, so the whole besluit:AanvullendReglement is yellow as block.
+      let besluitBlock = this.findHighestNodeForBesluit(context.semanticNode, tripleAanvullendReglement.subject);
+
+      let foundRegions = roadSignsPerBesluit[tripleAanvullendReglement.subject].regions;
+
+      //No double hinting, if region is found, skip.
+      if(foundRegions.find(r => this.isSameRegion(r, besluitBlock.region ))) continue;
+      else foundRegions.push(besluitBlock.region);
+
+      hintsRegistry.removeHintsInRegion(besluitBlock.region, hrId, this.get('who'));
+      hints.pushObjects(this.generateHintsForContext(context, besluitBlock.region, newRoadSigns));
+    }
+
+    const cards = hints.map( hint => this.generateCard(hrId, hintsRegistry, editor, hint) );
     if (cards.length > 0) {
       hintsRegistry.addHints(hrId, this.get('who'), cards);
     }
