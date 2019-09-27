@@ -24,7 +24,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     this.set('geosparql', 'http://www.opengis.net/ont/geosparql#');
     this.set('locn', 'http://www.w3.org/ns/locn#');
     this.set('mobiliteit', 'https://data.vlaanderen.be/ns/mobiliteit#');
-    this.set('roadsigns', A([]));
   },
 
   /**
@@ -131,9 +130,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @private
    */
   detectRelevantContext(context){
-    return context.context.find(t =>
-                                t.object === `${this.besluit}AanvullendReglement`
-                                && t.predicate === 'a');
     return context
       .context
       .find(t => t.object === `${this.besluit}AanvullendReglement` && t.predicate === 'a');
