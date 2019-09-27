@@ -65,11 +65,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       const roadsignTriples = triples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Verkeersteken`);
 
       for (let { subject } of roadsignTriples) {
-        const board = triples.find(t => t.predicate === `${this.mobiliteit}realiseert` && t.object === subject).subject;
-        const opstelling = triples.find(t => t.predicate === `${this.mobiliteit}omvatVerkeersbord` && t.object === board).subject;
-        const location = triples.find(t => t.subject === opstelling && t.predicate === `${this.locn}geometry`).object;
-        const point = triples.find(t => t.subject === location && t.predicate === `${this.geosparql}asWKT`).object;
-        const isBeginZone = triples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}isBeginZone`);
 
         this.roadsigns.pushObject(EmberObject.create({
           besluitUri: besluitUri,
@@ -79,6 +74,11 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
           uri: subject
         }));
       }
+      const board = (besluitTriples.find(t => t.predicate === `${this.mobiliteit}realiseert` && t.object === subject) || {}).subject;
+      const opstelling = (besluitTriples.find(t => t.predicate === `${this.mobiliteit}omvatVerkeersbord` && t.object === board) || {}).subject;
+      const location = (besluitTriples.find(t => t.subject === opstelling && t.predicate === `${this.locn}geometry`) || {}).object;
+      const point = (besluitTriples.find(t => t.subject === location && t.predicate === `${this.geosparql}asWKT`) || {}).object;
+      const isBeginZone = besluitTriples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}isBeginZone`);
     }
   },
 
