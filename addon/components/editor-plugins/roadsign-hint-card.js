@@ -52,16 +52,7 @@ export default Component.extend({
   /**
    * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
    */
-  unreferencedRoadsigns: computed ('roadsigns.[]', 'info.editor', function() {
-    const triples = this.info.editor.triplesDefinedInResource( this.info.besluitUri );
-
-    return this.roadsigns
-      .filter ( sign => sign.besluitUri === this.info.besluitUri)
-      .filter ( sign => {
-        const regel = triples.find(t => t.predicate === `${this.hintPlugin.mobiliteit}wordtAangeduidDoor` && t.object === sign.uri);
-        return !regel || !triples.some(t => t.predicate === `${this.hintPlugin.mobiliteit}heeftMobiliteitsMaatregel` && t.object === regel.subject);
-      });
-  }),
+  unreferencedRoadsigns: reads('info.unreferencedRoadsigns'),
 
   actions: {
     insert(){
