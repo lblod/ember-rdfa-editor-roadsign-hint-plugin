@@ -139,6 +139,10 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       .find(t => t.object === `${this.besluit}AanvullendReglement` && t.predicate === 'a');
   },
 
+  isSameRegion(a, b){
+    return a[0] === b[0] && a[1] === b[1];
+  },
+
   findUnreferencedRoadsigns(editor, besluitUri){
     const triples = editor.triplesDefinedInResource( besluitUri );
     const roadsigns  = this.detectRoadsigns(besluitUri, triples);
