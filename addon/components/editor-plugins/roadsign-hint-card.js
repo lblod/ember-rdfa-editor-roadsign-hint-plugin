@@ -55,13 +55,10 @@ export default Component.extend({
    */
   unreferencedRoadsigns: reads('info.unreferencedRoadsigns'),
 
-  generateArticleHtml: async function(uri, roadsign, newArticleNumber) {
-    const conceptUri = roadsign.roadsignConcept;
-
-    const queryParams = {
-      'filter[:uri:]': conceptUri
-    }
-    const concept = await this.store.query('verkeersbordconcept', queryParams);
+  generateArticleHtml: function(uri, roadsign, newArticleNumber) {
+    const concept = this.info.unreferencedRoadsignConcepts.filter(unreferencedRoadsignConcept =>
+      unreferencedRoadsignConcept.firstObject.id === roadsign.roadsignConcept.substring(roadsign.roadsignConcept.lastIndexOf('/') + 1)
+    ).firstObject;
     const definition = concept.length ? concept.firstObject.beschrijving : "";
 
     const innerArtikelHtml = `
@@ -75,7 +72,7 @@ export default Component.extend({
               ${definition}
             </span>
             Referenced roadsign
-            <span proerty="mobiliteit:heeftVerkeersbordconcept" resource=${conceptUri} typeof="mobiliteit:Verkeersbordconcept"></span>
+            <span proerty="mobiliteit:heeftVerkeersbordconcept" resource=${concept.uri} typeof="mobiliteit:Verkeersbordconcept"></span>
           </span>
         </span>`;
 
@@ -83,7 +80,7 @@ export default Component.extend({
   },
 
   actions: {
-    async insert(roadsign) {
+    insert(roadsign) {
       const triples = this.editor.triplesDefinedInResource(this.info.besluitUri);
       const articles = triples.filter((triple) => {
         if (triple.predicate == "http://data.europa.eu/eli/ontology#has_part") {
@@ -96,7 +93,6 @@ export default Component.extend({
           return true;
         }
       });
-
       const sortedArticles = articlesNumberTriples.sortBy("object");
 
       const newArticleNumber = articles.length + 1;
@@ -108,7 +104,7 @@ export default Component.extend({
         });
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = await this.generateArticleHtml(uri, roadsign, newArticleNumber);
+        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber);
 
         this.editor.update(decision, {
           append: {
@@ -125,7 +121,7 @@ export default Component.extend({
         });
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = await this.generateArticleHtml(uri, roadsign, newArticleNumber);
+        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber);
 
         this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 

@@ -2,8 +2,9 @@
 import { getOwner } from '@ember/application';
 import Service from '@ember/service';
 import EmberObject from '@ember/object';
-import { task } from 'ember-concurrency';
+import { task, all } from 'ember-concurrency';
 import { A }  from '@ember/array';
+import { inject as service } from '@ember/service';
 
 /**
  * Service responsible for correct annotation of dates
@@ -14,6 +15,7 @@ import { A }  from '@ember/array';
  * @extends EmberService
  */
 const RdfaEditorRoadsignHintPlugin = Service.extend({
+  store: service(),
 
   init(){
     this._super(...arguments);
@@ -24,6 +26,14 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     this.set('locn', 'http://www.w3.org/ns/locn#');
     this.set('mobiliteit', 'https://data.vlaanderen.be/ns/mobiliteit#');
   },
+
+  fetchRoadsignConcept: task(function * (roadsign) {
+    const conceptUri = roadsign.roadsignConcept;
+    const queryParams = {
+      'filter[:uri:]': conceptUri
+    }
+    return yield this.store.query('verkeersbordconcept', queryParams);
+  }).enqueue(),
 
   /**
    * task to handle the incoming events from the editor dispatcher
@@ -65,6 +75,13 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
       if(newRoadSigns.length === 0) continue;
 
+      let fetchRoadsignConceptTasks = [];
+      newRoadSigns.forEach((newRoadSign) => {
+        fetchRoadsignConceptTasks.push(this.get('fetchRoadsignConcept').perform(newRoadSign));
+      });
+
+      const newRoadsignsConcepts = yield all(fetchRoadsignConceptTasks);
+
       //To avoid scattering of the hint (yellow on different places), we need to find, within the context path,
       // the highest node, so the whole besluit:AanvullendReglement is yellow as block.
       let besluitBlock = this.findHighestNodeForBesluit(context.semanticNode, `${this.besluit}AanvullendReglement`);
@@ -76,7 +93,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       else foundRegions.push(besluitBlock.region);
 
       hintsRegistry.removeHintsInRegion(besluitBlock.region, hrId, this.get('who'));
-      hints.pushObjects(this.generateHintsForContext(context, besluitBlock.region, newRoadSigns));
+      hints.pushObjects(this.generateHintsForContext(context, besluitBlock.region, newRoadSigns, newRoadsignsConcepts));
     }
 
     const cards = hints.map( hint => this.generateCard(hrId, hintsRegistry, editor, hint) );
@@ -152,7 +169,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       });
   },
 
-
   /**
    * Maps location of substring back within reference location
    *
@@ -188,6 +204,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       info: {
         label: this.get('who'),
         unreferencedRoadsigns: hint.unreferencedRoadsigns,
+        unreferencedRoadsignConcepts: hint.unreferencedRoadsignConcepts,
         plainValue: hint.text,
         location: hint.location,
         besluitUri: hint.resource,
@@ -209,12 +226,12 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    *
    * @private
    */
-  generateHintsForContext(context, location, unreferencedRoadsigns){
+  generateHintsForContext(context, location, unreferencedRoadsigns, unreferencedRoadsignConcepts){
     const triple = context.context.slice(-1)[0];
     const hints = [];
     const resource = triple.subject;
     const text = context.text || '';
-    hints.push({ text, location, context, resource, unreferencedRoadsigns });
+    hints.push({ text, location, context, resource, unreferencedRoadsigns, unreferencedRoadsignConcepts });
 
     return hints;
   }
