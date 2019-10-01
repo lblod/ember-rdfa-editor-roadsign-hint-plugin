@@ -72,7 +72,7 @@ export default Component.extend({
               ${definition}
             </span>
             Referenced roadsign
-            <span proerty="mobiliteit:heeftVerkeersbordconcept" resource=${concept.uri} typeof="mobiliteit:Verkeersbordconcept"></span>
+            <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept"></span>
           </span>
         </span>`;
 
@@ -81,6 +81,8 @@ export default Component.extend({
 
   actions: {
     insert(roadsign) {
+      this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
+
       const triples = this.editor.triplesDefinedInResource(this.info.besluitUri);
       const articles = triples.filter((triple) => {
         if (triple.predicate == "http://data.europa.eu/eli/ontology#has_part") {
@@ -122,8 +124,6 @@ export default Component.extend({
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
         const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber);
-
-        this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 
         this.editor.update(lastArticle, {
           after: {
