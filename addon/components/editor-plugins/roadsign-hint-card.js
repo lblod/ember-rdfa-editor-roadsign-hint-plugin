@@ -66,8 +66,8 @@ export default Component.extend({
         <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
         <span class="annotation article-content" property="prov:value"></span>
         <span property="refers-to" content=""></span>
-        <span property="mobiliteit:heeftMobiliteitsMaatregel" resource="http://8og.ir/{{unique-uri}}" typeof="mobiliteit:MobiliteitMaatsregel">
-          <span property="mobiliteit:wordtAangeduidDoor" resource="http://data.lblod.info/id/verkeersteken/14b4bd75-a72c-4fd7-99bf-db3c5d094ae9" typeof="mobiliteit:Verkeersteken">
+        <span property="mobiliteit:heeftMobiliteitsMaatregel" resource="http://data.lblod.info/id/mobiliteit-maatsregel/${v4()}" typeof="mobiliteit:MobiliteitMaatsregel">
+          <span property="mobiliteit:wordtAangeduidDoor" resource=${roadsign.uri} typeof="mobiliteit:Verkeersteken">
             <span property="dc:description">
               ${definition}
             </span>
