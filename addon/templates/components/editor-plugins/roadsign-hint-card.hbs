@@ -16,19 +16,16 @@
           class="px-4 py-2 hover:bg-teal-600 hover:text-white w-full text-left rounded
                  {{if (eq selectedRoadsign roadsign) "text-white bg-teal-600"}}">
           {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
+          {{#wu-button-group}}
+            {{wu-button label="Vervangen"
+              onClick=(action "insert" roadsign)}}
+          {{/wu-button-group}}
         </li>
       {{/each}}
     </ul>
   </div>
 </div>
 
-<div class="modal-dialog__footer">
-  {{#wu-button-group}}
-    {{wu-button label="Vervangen"
-      onClick=(action "insert")
-      command="ctrl + j"
-      commandLocation="below"}}
-  {{/wu-button-group}}
-</div>
+<div class="modal-dialog__footer"></div>
 
 {{yield}}

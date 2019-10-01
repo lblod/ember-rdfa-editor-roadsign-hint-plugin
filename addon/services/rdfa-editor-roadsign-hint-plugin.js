@@ -1,7 +1,7 @@
 /* eslint-disable require-yield */
 import { getOwner } from '@ember/application';
 import Service from '@ember/service';
-import EmberObject, { computed } from '@ember/object';
+import EmberObject from '@ember/object';
 import { task } from 'ember-concurrency';
 import { A }  from '@ember/array';
 
@@ -14,7 +14,6 @@ import { A }  from '@ember/array';
  * @extends EmberService
  */
 const RdfaEditorRoadsignHintPlugin = Service.extend({
-
 
   init(){
     this._super(...arguments);
@@ -96,13 +95,15 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       const location = (besluitTriples.find(t => t.subject === opstelling && t.predicate === `${this.locn}geometry`) || {}).object;
       const point = (besluitTriples.find(t => t.subject === location && t.predicate === `${this.geosparql}asWKT`) || {}).object;
       const isBeginZone = besluitTriples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}isBeginZone`);
+      const roadsignConcept = besluitTriples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}heeftVerkeersbordconcept`);
 
       roadsigns.pushObject(EmberObject.create({
         besluitUri: besluitUri,
         isBeginZone: isBeginZone && isBeginZone.object,
         location: location,
         point: point,
-        uri: subject
+        uri: subject,
+        roadsignConcept: roadsignConcept && roadsignConcept.object
       }));
     }
     return roadsigns;
@@ -189,7 +190,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
         unreferencedRoadsigns: hint.unreferencedRoadsigns,
         plainValue: hint.text,
         location: hint.location,
-        besluitUri: hint.context.context.find (c => c.predicate === 'a' && c.object === `${this.besluit}Besluit`).subject,
+        besluitUri: hint.resource,
         hrId, hintsRegistry, editor
       },
       location: hint.location,
