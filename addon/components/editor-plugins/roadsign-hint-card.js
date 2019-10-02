@@ -59,7 +59,7 @@ export default Component.extend({
     const concept = this.info.unreferencedRoadsignConcepts.filter(unreferencedRoadsignConcept =>
       unreferencedRoadsignConcept.firstObject.id === roadsign.roadsignConcept.substring(roadsign.roadsignConcept.lastIndexOf('/') + 1)
     ).firstObject;
-    const definition = concept.length ? concept.firstObject.beschrijving : "";
+    const definition = concept.length ? concept.firstObject.betekenis : "";
 
     const innerArtikelHtml = `
         <span class="annotation article-number" property="eli:number">Artikel ${newArticleNumber}.</span>
