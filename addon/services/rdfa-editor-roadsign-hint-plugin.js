@@ -25,6 +25,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     this.set('geosparql', 'http://www.opengis.net/ont/geosparql#');
     this.set('locn', 'http://www.w3.org/ns/locn#');
     this.set('mobiliteit', 'https://data.vlaanderen.be/ns/mobiliteit#');
+    this.set('infrastructuur', 'https://data.vlaanderen.be/ns/openbaardomein/infrastructuur#');
   },
 
   fetchRoadsignConcept: task(function * (roadsign) {
@@ -102,31 +103,47 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     }
   }),
 
-  detectRoadsigns(besluitUri, besluitTriples) {
+  detectRoadsignsInMap(besluitUri, besluitTriples) {
     let roadsigns = A([]);
-    const roadsignTriples = besluitTriples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Verkeersteken`);
 
-    for (let { subject } of roadsignTriples) {
-      const board = (besluitTriples.find(t => t.predicate === `${this.mobiliteit}realiseert` && t.object === subject) || {}).subject;
-      const opstelling = (besluitTriples.find(t => t.predicate === `${this.mobiliteit}omvatVerkeersbord` && t.object === board) || {}).subject;
-      const location = (besluitTriples.find(t => t.subject === opstelling && t.predicate === `${this.locn}geometry`) || {}).object;
+    const opstellingTriples = besluitTriples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Opstelling`);
+
+    for (let { subject } of opstellingTriples) {
+      const infrastructuurRoadSign = (besluitTriples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}omvatVerkeersbord`)).object;
+      const roadsign = (besluitTriples.find(t => t.subject === infrastructuurRoadSign && t.predicate === `${this.mobiliteit}realiseert`)).object;
+
+      const location = (besluitTriples.find(t => t.subject === subject && t.predicate === `${this.locn}geometry`) || {}).object;
       const point = (besluitTriples.find(t => t.subject === location && t.predicate === `${this.geosparql}asWKT`) || {}).object;
-      const isBeginZone = besluitTriples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}isBeginZone`);
-      const roadsignConcept = besluitTriples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}heeftVerkeersbordconcept`);
+      const isBeginZone = besluitTriples.find(t => t.subject === roadsign && t.predicate === `${this.mobiliteit}isBeginZone`);
+      const isEindeZone = besluitTriples.find(t => t.subject === roadsign && t.predicate === `${this.mobiliteit}isEindeZone`);
+      const roadsignConcept = besluitTriples.find(t => t.subject === roadsign && t.predicate === `${this.mobiliteit}heeftVerkeersbordconcept`);
 
       roadsigns.pushObject(EmberObject.create({
-        besluitUri: besluitUri,
+        besluitUri,
+        infrastructuurRoadSign,
+        location,
+        point,
+        uri: roadsign,
         isBeginZone: isBeginZone && isBeginZone.object,
-        location: location,
-        point: point,
-        uri: subject,
-        roadsignConcept: roadsignConcept && roadsignConcept.object
+        isEindeZone: isEindeZone && isEindeZone.object,
+        roadsignConcept: roadsignConcept && roadsignConcept.object,
       }));
     }
     return roadsigns;
   },
 
-  findHighestNodeForBesluit(richNode, typeUri){
+  detectRoadsignsInDecisions(besluitTriples) {
+    const roadSignTriples = (besluitTriples.filter(t => t.predicate === `${this.mobiliteit}wordtAangeduidDoor`));
+    let roadsigns = A([]);
+    for (let { object } of roadSignTriples) {
+      roadsigns.pushObject(EmberObject.create({
+        uri: object
+      }));
+    };
+    return roadsigns;
+  },
+
+  findHighestNodeForBesluit(richNode, typeUri) {
     if(!richNode.parent)
       return null;
     if(!richNode.rdfaAttributes || !richNode.rdfaAttributes.typeof)
@@ -159,14 +176,15 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
   findUnreferencedRoadsigns(editor, besluitUri){
     const triples = editor.triplesDefinedInResource( besluitUri );
-    const roadsigns  = this.detectRoadsigns(besluitUri, triples);
+    const detectRoadsignsInMap = this.detectRoadsignsInMap(besluitUri, triples);
+    const detectRoadsignsInDecisions = this.detectRoadsignsInDecisions(triples);
 
-    return roadsigns
-      .filter ( sign => sign.besluitUri === besluitUri)
-      .filter ( sign => {
-        const regel = triples.find(t => t.predicate === `${this.mobiliteit}wordtAangeduidDoor` && t.object === sign.uri);
-        return !regel || !triples.some(t => t.predicate === `${this.mobiliteit}heeftMobiliteitsMaatregel` && t.object === regel.subject);
+    const difference = detectRoadsignsInMap.filter(x => {
+      return !detectRoadsignsInDecisions.find(y => {
+        return y.uri === x.uri;
       });
+    });
+    return difference;
   },
 
   /**

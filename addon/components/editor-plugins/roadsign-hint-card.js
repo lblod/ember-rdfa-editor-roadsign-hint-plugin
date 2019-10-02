@@ -66,14 +66,12 @@ export default Component.extend({
         <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
         <span class="annotation article-content" property="prov:value"></span>
         <span property="refers-to" content=""></span>
-        <span property="mobiliteit:heeftMobiliteitsMaatregel" resource="http://data.lblod.info/id/mobiliteit-maatsregel/${v4()}" typeof="mobiliteit:MobiliteitMaatsregel">
-          <span property="mobiliteit:wordtAangeduidDoor" resource=${roadsign.uri} typeof="mobiliteit:Verkeersteken">
-            <span property="dc:description">
-              ${definition}
-            </span>
-            Referenced roadsign
-            <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept"></span>
+        <span property="mobiliteit:wordtAangeduidDoor" resource=${roadsign.uri} typeof="mobiliteit:Verkeersteken">
+          <span property="dc:description">
+            ${definition}
           </span>
+          Referenced roadsign
+          <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept"></span>
         </span>`;
 
     return innerArtikelHtml;
