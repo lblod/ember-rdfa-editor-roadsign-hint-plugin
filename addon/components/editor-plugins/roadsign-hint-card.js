@@ -56,10 +56,10 @@ export default Component.extend({
   unreferencedRoadsigns: reads('info.unreferencedRoadsigns'),
 
   generateArticleHtml: function(uri, roadsign, newArticleNumber) {
-    const concept = this.info.unreferencedRoadsignConcepts.filter(unreferencedRoadsignConcept =>
-      unreferencedRoadsignConcept.firstObject.id === roadsign.roadsignConcept.substring(roadsign.roadsignConcept.lastIndexOf('/') + 1)
-    ).firstObject;
-    const definition = concept.length ? concept.firstObject.betekenis : "";
+    const concept = this.info.unreferencedRoadsignConcepts.find(unreferencedRoadsignConcept =>
+      unreferencedRoadsignConcept.id === roadsign.roadsignConcept.substring(roadsign.roadsignConcept.lastIndexOf('/') + 1)
+    );
+    const definition = concept ? concept.betekenis : "";
 
     const innerArtikelHtml = `
         <span class="annotation article-number" property="eli:number">Artikel ${newArticleNumber}.</span>

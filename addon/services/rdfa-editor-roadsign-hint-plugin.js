@@ -33,7 +33,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     const queryParams = {
       'filter[:uri:]': conceptUri
     }
-    return yield this.store.query('verkeersbordconcept', queryParams);
+    return (yield this.store.query('verkeersbordconcept', queryParams)).firstObject;
   }).enqueue(),
 
   /**
@@ -139,7 +139,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       roadsigns.pushObject(EmberObject.create({
         uri: object
       }));
-    };
+    }
     return roadsigns;
   },
 

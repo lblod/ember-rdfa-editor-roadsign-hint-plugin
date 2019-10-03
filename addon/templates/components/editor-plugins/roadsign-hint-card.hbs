@@ -16,6 +16,9 @@
           class="px-4 py-2 hover:bg-teal-600 hover:text-white w-full text-left rounded
                  {{if (eq selectedRoadsign roadsign) "text-white bg-teal-600"}}">
           {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
+
+          {{editor-plugins/roadsign-image roadsign=roadsign concepts=info.unreferencedRoadsignConcepts}}
+
           {{#wu-button-group}}
             {{wu-button label="Vervangen"
               onClick=(action "insert" roadsign)}}
