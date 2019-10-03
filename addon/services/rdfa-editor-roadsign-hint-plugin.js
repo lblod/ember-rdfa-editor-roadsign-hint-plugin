@@ -34,7 +34,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       'filter[:uri:]': conceptUri
     }
     return (yield this.store.query('verkeersbordconcept', queryParams)).firstObject;
-  }).enqueue(),
+  }),
 
   /**
    * task to handle the incoming events from the editor dispatcher

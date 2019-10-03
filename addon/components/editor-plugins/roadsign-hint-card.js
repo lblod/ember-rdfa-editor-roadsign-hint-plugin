@@ -71,6 +71,7 @@ export default Component.extend({
             ${definition}
           </span>
           Referenced roadsign
+          <img src=${concept ? concept.afbeelding : ""} alt="roadsign">
           <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept"></span>
         </span>`;
 
