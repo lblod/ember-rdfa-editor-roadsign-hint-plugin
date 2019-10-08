@@ -90,7 +90,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       // To avoid scattering of the hint (yellow on different places), we need to find, within the context path,
       // the highest node, so the whole besluit:AanvullendReglement is yellow as block.
       const besluitBlock = rdfaBlocks.find(r => {
-        const rdfaAttributes = r.semanticNode.rdfaAttributes || {};
+        const rdfaAttributes = r.semanticNode.rdfaAttributes || {};
         return rdfaAttributes.resource == aanvullendReglement && rdfaAttributes.typeof.includes("http://data.vlaanderen.be/ns/besluit#AanvullendReglement");
       }).semanticNode;
 

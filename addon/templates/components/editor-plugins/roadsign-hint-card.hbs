@@ -8,30 +8,30 @@
   </div>
 </div>
 
-<div class="modal-dialog__content">
-  <div class="bg-gray-300 p-2 text-black">
-    <ul class="w-full">
-      {{#each unreferencedRoadsigns as |roadsign|}}
-        <li class="px-4 py-2 hover:bg-teal-600 hover:text-white w-full text-left rounded">
-          <div class="grid">
-            <div class="col--8-12">
-              {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
-            </div>
-            <div class="col--4-12">
+<div class="modal-dialog__content modal-dialog__content--sectioned">
+  <ul class="link-list link-list--bordered">
+    {{#each unreferencedRoadsigns as |roadsign|}}
+      <li class="link-list__item u-padding--round--tiny">
+        <div class="grid">
+          <div class="col--3-12">
+            <div>
               {{editor-plugins/roadsign-image roadsign=roadsign concepts=info.unreferencedRoadsignConcepts}}
             </div>
-
+          </div>
+          <div class="col--9-12">
+            {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
             {{#wu-button-group}}
-              {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsign) class="button--narrow"}}
+              {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsign) class="button--narrow button--small u-spacer--bottom--tinier"}}
               {{#if articleNodes.selections.length}}
-                {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsign) class="button--narrow button--alt"}}
+                {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsign) class="button--narrow button--alt button--small u-spacer--bottom--tinier"}}
               {{/if}}
             {{/wu-button-group}}
           </div>
-        </li>
-      {{/each}}
-    </ul>
-  </div>
+        </div>
+      </li>
+    {{/each}}
+  </ul>
+
 </div>
 
 <div class="modal-dialog__footer"></div>
