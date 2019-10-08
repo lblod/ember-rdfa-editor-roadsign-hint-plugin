@@ -52,7 +52,7 @@ export default Component.extend({
 
   didReceiveAttrs() {
     const articleNodes = this.editor.selectContext(this.editor.currentSelection, {
-      scope: 'auto',
+      scope: "auto",
       property: "http://data.europa.eu/eli/ontology#has_part"
     });
     this.set('articleNodes', articleNodes);

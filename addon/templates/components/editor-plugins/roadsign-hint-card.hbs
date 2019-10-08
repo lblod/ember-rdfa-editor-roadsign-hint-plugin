@@ -19,7 +19,7 @@
             </div>
           </div>
           <div class="col--9-12">
-            {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
+            {{editor-plugins/roadsign-address point=roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
             {{#wu-button-group}}
               {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsign) class="button--narrow button--small u-spacer--bottom--tinier"}}
               {{#if articleNodes.selections.length}}
