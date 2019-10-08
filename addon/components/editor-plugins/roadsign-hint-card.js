@@ -50,15 +50,27 @@ export default Component.extend({
 
   roadsigns: reads('hintPlugin.roadsigns'),
 
+  didReceiveAttrs() {
+    const articleNodes = this.editor.selectContext(this.editor.currentSelection, {
+      scope: 'auto',
+      property: "http://data.europa.eu/eli/ontology#has_part"
+    });
+    this.set('articleNodes', articleNodes);
+  },
+
   /**
    * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
    */
   unreferencedRoadsigns: reads('info.unreferencedRoadsigns'),
 
-  generateArticleHtml: function(uri, roadsign, newArticleNumber) {
-    const concept = this.info.unreferencedRoadsignConcepts.find(unreferencedRoadsignConcept =>
+  getConcept: function(roadsign) {
+    return this.info.unreferencedRoadsignConcepts.find(unreferencedRoadsignConcept =>
       unreferencedRoadsignConcept.id === roadsign.roadsignConcept.substring(roadsign.roadsignConcept.lastIndexOf('/') + 1)
     );
+  },
+
+  generateArticleHtml: function(uri, roadsign, newArticleNumber) {
+    const concept = this.getConcept(roadsign);
     const definition = concept ? concept.betekenis : "";
 
     const innerArtikelHtml = `
@@ -71,8 +83,9 @@ export default Component.extend({
             ${definition}
           </span>
           Referenced roadsign
-          <img src=${concept ? concept.afbeelding : ""} alt="roadsign">
-          <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept"></span>
+          <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
+            <img src=${concept ? concept.afbeelding : ""} alt="roadsign">
+          </span>
         </span>`;
 
     return innerArtikelHtml;
@@ -127,7 +140,7 @@ export default Component.extend({
         this.editor.update(lastArticle, {
           after: {
             resource: uri,
-            typeof: "besluit:Artikel",
+            typeof: ["besluit:Artikel", "ext:MobiliteitsmaatregelArtikel"],
             property: "eli:has_part",
             innerHTML
           }
@@ -136,6 +149,32 @@ export default Component.extend({
 
       // const mappedLocation = this.get('hintsRegistry').updateLocationToCurrentIndex(this.get('hrId'), this.get('location'));
       // this.get('editor').replaceTextWithHTML(...mappedLocation, this.get('info').htmlString);
+    },
+
+    addToArticle(roadsign) {
+      this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
+
+      const concept = this.getConcept(roadsign);
+      const definition = concept ? concept.betekenis : "";
+
+      const roadsignHtml = `
+        <br>
+        <span property="dc:description">
+          ${definition}
+        </span>
+        Referenced roadsign
+        <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
+          <img src=${concept ? concept.afbeelding : ""} alt="roadsign">
+        </span>`;
+
+      this.editor.update(this.articleNodes, {
+        append: {
+          resource: roadsign.uri,
+          typeof: "mobiliteit:Verkeersteken",
+          property: "mobiliteit:wordtAangeduidDoor",
+          innerHTML: roadsignHtml
+        }
+      });
     }
   }
 });

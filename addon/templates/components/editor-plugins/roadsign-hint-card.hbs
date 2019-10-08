@@ -12,17 +12,22 @@
   <div class="bg-gray-300 p-2 text-black">
     <ul class="w-full">
       {{#each unreferencedRoadsigns as |roadsign|}}
-        <li {{action (mut selectedRoadsign) roadsign}} role="button"
-          class="px-4 py-2 hover:bg-teal-600 hover:text-white w-full text-left rounded
-                 {{if (eq selectedRoadsign roadsign) "text-white bg-teal-600"}}">
-          {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
+        <li class="px-4 py-2 hover:bg-teal-600 hover:text-white w-full text-left rounded">
+          <div class="grid">
+            <div class="col--8-12">
+              {{roadsign.point}} {{if roadsign.isBeginZone "Beginzone" "Eindzone"}}
+            </div>
+            <div class="col--4-12">
+              {{editor-plugins/roadsign-image roadsign=roadsign concepts=info.unreferencedRoadsignConcepts}}
+            </div>
 
-          {{editor-plugins/roadsign-image roadsign=roadsign concepts=info.unreferencedRoadsignConcepts}}
-
-          {{#wu-button-group}}
-            {{wu-button label="Vervangen"
-              onClick=(action "insert" roadsign)}}
-          {{/wu-button-group}}
+            {{#wu-button-group}}
+              {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsign) class="button--narrow"}}
+              {{#if articleNodes.selections.length}}
+                {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsign) class="button--narrow button--alt"}}
+              {{/if}}
+            {{/wu-button-group}}
+          </div>
         </li>
       {{/each}}
     </ul>

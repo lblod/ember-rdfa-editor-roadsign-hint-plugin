@@ -48,30 +48,34 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    *
    * @public
    */
-  execute: task(function * (hrId, contexts, hintsRegistry, editor) {
+  execute: task(function * (hrId, rdfaBlocks, hintsRegistry, editor) {
     const hints = [];
+
+    const uniqueAanvullendReglementen = new Set();
+    rdfaBlocks.forEach(rdfaBlock => {
+      rdfaBlock.context.forEach(triple => {
+        if (triple.object === 'http://data.vlaanderen.be/ns/besluit#AanvullendReglement' && triple.predicate === 'a') {
+          uniqueAanvullendReglementen.add(triple.subject);
+        }
+      });
+    });
 
     // We only want to scan once for this subject, as the document won't have changed
     // within the processing of the loop.
     // We store the result in an intermediate variable, so this can be re-used in next iteration.
     // It wil contain:
     // { besluitUri : { newRoadSigns, regions }}
+
     let roadSignsPerBesluit = {};
 
-    for(let context of contexts){
-      let tripleAanvullendReglement = this.detectRelevantContext(context);
-
-      if(!tripleAanvullendReglement){
-        continue;
-      }
-
+    for (let aanvullendReglement of uniqueAanvullendReglementen) {
       let newRoadSigns = [];
-      if(roadSignsPerBesluit[tripleAanvullendReglement.subject]){
-        newRoadSigns = roadSignsPerBesluit[tripleAanvullendReglement.subject].newRoadSigns;
+      if(roadSignsPerBesluit[aanvullendReglement]){
+        newRoadSigns = roadSignsPerBesluit[aanvullendReglement].newRoadSigns;
       }
       else {
-        newRoadSigns = this.findUnreferencedRoadsigns(editor, tripleAanvullendReglement.subject);
-        roadSignsPerBesluit[tripleAanvullendReglement.subject] = { newRoadSigns, regions: [] };
+        newRoadSigns = this.findUnreferencedRoadsigns(editor, aanvullendReglement);
+        roadSignsPerBesluit[aanvullendReglement] = { newRoadSigns, regions: [] };
       }
 
       if(newRoadSigns.length === 0) continue;
@@ -83,18 +87,15 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
       const newRoadsignsConcepts = yield all(fetchRoadsignConceptTasks);
 
-      //To avoid scattering of the hint (yellow on different places), we need to find, within the context path,
+      // To avoid scattering of the hint (yellow on different places), we need to find, within the context path,
       // the highest node, so the whole besluit:AanvullendReglement is yellow as block.
-      let besluitBlock = this.findHighestNodeForBesluit(context.semanticNode, `${this.besluit}AanvullendReglement`);
-
-      let foundRegions = roadSignsPerBesluit[tripleAanvullendReglement.subject].regions;
-
-      //No double hinting, if region is found, skip.
-      if(foundRegions.find(r => this.isSameRegion(r, besluitBlock.region ))) continue;
-      else foundRegions.push(besluitBlock.region);
+      const besluitBlock = rdfaBlocks.find(r => {
+        const rdfaAttributes = r.semanticNode.rdfaAttributes || {};
+        return rdfaAttributes.resource == aanvullendReglement && rdfaAttributes.typeof.includes("http://data.vlaanderen.be/ns/besluit#AanvullendReglement");
+      }).semanticNode;
 
       hintsRegistry.removeHintsInRegion(besluitBlock.region, hrId, this.get('who'));
-      hints.pushObjects(this.generateHintsForContext(context, besluitBlock.region, newRoadSigns, newRoadsignsConcepts));
+      hints.pushObjects(this.generateHintsForContext(besluitBlock, aanvullendReglement, besluitBlock.region, newRoadSigns, newRoadsignsConcepts));
     }
 
     const cards = hints.map( hint => this.generateCard(hrId, hintsRegistry, editor, hint) );
@@ -244,10 +245,9 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    *
    * @private
    */
-  generateHintsForContext(context, location, unreferencedRoadsigns, unreferencedRoadsignConcepts){
-    const triple = context.context.slice(-1)[0];
+  generateHintsForContext(context, uri, location, unreferencedRoadsigns, unreferencedRoadsignConcepts){
     const hints = [];
-    const resource = triple.subject;
+    const resource = uri;
     const text = context.text || '';
     hints.push({ text, location, context, resource, unreferencedRoadsigns, unreferencedRoadsignConcepts });
 
