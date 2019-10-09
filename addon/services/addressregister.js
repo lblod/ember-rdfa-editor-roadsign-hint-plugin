@@ -1,5 +1,4 @@
 import Service, { inject as service } from '@ember/service';
-import fetch from 'fetch';
 
 class AddressSuggestion {
   constructor({ id, street, housenumber, zipCode, municipality, fullAddress }) {
@@ -13,9 +12,11 @@ class AddressSuggestion {
 }
 
 export default Service.extend({
+  ajax: service(),
+
   async getLocation(lat, lon, count=1) {
-    const results = await (await fetch(`http://loc.geopunt.be/v4/Location?latlon=${lat},${lon}&c=1`)).json();
-    const addressSuggestions = results.LocationResult.map( function(result) {
+    const results = await this.ajax.request(`/adressenregister/suggest-from-latlon?lat=${lat}&lon=${lon}&count=${count}`);
+    const addressSuggestions = results.map( function(result) {
       return new AddressSuggestion({
         id: result.ID,
         street: result.Thoroughfarename,
