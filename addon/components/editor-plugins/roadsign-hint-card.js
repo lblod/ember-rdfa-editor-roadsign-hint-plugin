@@ -14,6 +14,7 @@ import { v4 } from "ember-uuid";
 export default Component.extend({
   layout,
   store: service(),
+  addressregister: service(),
   hintPlugin: service('rdfa-editor-roadsign-hint-plugin'),
 
   /**
@@ -50,12 +51,20 @@ export default Component.extend({
 
   roadsigns: reads('hintPlugin.roadsigns'),
 
-  didReceiveAttrs() {
+  async didReceiveAttrs() {
     const articleNodes = this.editor.selectContext(this.editor.currentSelection, {
       scope: "auto",
       property: "http://data.europa.eu/eli/ontology#has_part"
     });
     this.set('articleNodes', articleNodes);
+
+    for (let roadsign of this.unreferencedRoadsigns) {
+      const [lat, lon] = this.addressregister.getLatLon(roadsign.point);
+      const address = await this.addressregister.getLocation(lat, lon);
+      if(address && address.length > 0) {
+        roadsign.set('address', address.firstObject.fullAddress);
+      }
+    }
   },
 
   /**
@@ -69,22 +78,24 @@ export default Component.extend({
     );
   },
 
-  generateArticleHtml: function(uri, roadsign, newArticleNumber) {
+  generateArticleHtml: function(uri, roadsign, newArticleNumber, address) {
     const concept = this.getConcept(roadsign);
     const definition = concept ? concept.betekenis : "";
 
     const innerArtikelHtml = `
         <span class="annotation article-number" property="eli:number">Artikel ${newArticleNumber}.</span>
         <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
-        <span class="annotation article-content" property="prov:value"></span>
-        <span property="refers-to" content=""></span>
-        <span property="mobiliteit:wordtAangeduidDoor" resource=${roadsign.uri} typeof="mobiliteit:Verkeersteken">
-          <span property="dc:description">
-            ${definition}
-          </span>
-          Referenced roadsign
-          <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
-            <img src=${concept ? concept.afbeelding : ""} alt="roadsign">
+        <span class="annotation article-content" property="prov:value">
+          <span property="mobiliteit:wordtAangeduidDoor" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
+            <span property="dc:description">
+              ${definition}
+            </span>
+            ter hoogte van ${address}
+            <span property="mobiliteit:isBeginZone" content="${roadsign.isBeginZone || false}" datatype="xsd:boolean"></span>
+            <span property="mobiliteit:isEindeZone" content="${roadsign.isEindeZone || false}" datatype="xsd:boolean"></span>
+            <span property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
+              <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
+            </span>
           </span>
         </span>`;
 
@@ -92,7 +103,7 @@ export default Component.extend({
   },
 
   actions: {
-    insert(roadsign) {
+    insert(roadsign, address) {
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 
       const triples = this.editor.triplesDefinedInResource(this.info.besluitUri);
@@ -118,7 +129,7 @@ export default Component.extend({
         });
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber);
+        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber, address);
 
         this.editor.update(decision, {
           append: {
@@ -135,7 +146,7 @@ export default Component.extend({
         });
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber);
+        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber, address);
 
         this.editor.update(lastArticle, {
           after: {
@@ -151,7 +162,7 @@ export default Component.extend({
       // this.get('editor').replaceTextWithHTML(...mappedLocation, this.get('info').htmlString);
     },
 
-    addToArticle(roadsign) {
+    addToArticle(roadsign, address) {
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 
       const concept = this.getConcept(roadsign);
@@ -162,9 +173,9 @@ export default Component.extend({
         <span property="dc:description">
           ${definition}
         </span>
-        Referenced roadsign
+        ter hoogte van ${address}
         <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
-          <img src=${concept ? concept.afbeelding : ""} alt="roadsign">
+          <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
         </span>`;
 
       this.editor.update(this.articleNodes, {

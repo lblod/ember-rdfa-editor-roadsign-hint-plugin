@@ -27,5 +27,10 @@ export default Service.extend({
       });
     });
     return addressSuggestions;
+  },
+
+  getLatLon(point) {
+    const regExp = /\(([^)]+)\)/; // Keep value between parentheses
+    return regExp.exec(point)[1].split(' ');
   }
 });
