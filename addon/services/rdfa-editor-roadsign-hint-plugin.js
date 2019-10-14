@@ -6,8 +6,11 @@ import { task, all } from 'ember-concurrency';
 import { A }  from '@ember/array';
 import { inject as service } from '@ember/service';
 
+// TODO remove unused helper methods
+// TODO document methods
+
 /**
- * Service responsible for correct annotation of dates
+ * Service responsible for correct annotations of road signs
  *
  * @module editor-roadsign-hint-plugin
  * @class RdfaEditorRoadsignHintPlugin
@@ -21,6 +24,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     this._super(...arguments);
     getOwner(this).resolveRegistration('config:environment');
 
+    // TODO should not be set as properties of the service. Use const variables outside the service instead
     this.set('besluit', 'http://data.vlaanderen.be/ns/besluit#');
     this.set('geosparql', 'http://www.opengis.net/ont/geosparql#');
     this.set('locn', 'http://www.w3.org/ns/locn#');
@@ -32,7 +36,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     const conceptUri = roadsign.roadsignConcept;
     const queryParams = {
       'filter[:uri:]': conceptUri
-    }
+    };
     return (yield this.store.query('verkeersbordconcept', queryParams)).firstObject;
   }),
 
@@ -51,6 +55,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
   execute: task(function * (hrId, rdfaBlocks, hintsRegistry, editor) {
     const hints = [];
 
+    // TODO move to helper method
     const uniqueAanvullendReglementen = new Set();
     rdfaBlocks.forEach(rdfaBlock => {
       rdfaBlock.context.forEach(triple => {
@@ -60,6 +65,8 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       });
     });
 
+    // TODO remove the caching construction with 'roadSignsPerBesluit'. Since we have a unique set of aanvullende reglementen,
+    // we're sure we will scan each besluit only once
     // We only want to scan once for this subject, as the document won't have changed
     // within the processing of the loop.
     // We store the result in an intermediate variable, so this can be re-used in next iteration.
@@ -80,21 +87,27 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
       if(newRoadSigns.length === 0) continue;
 
+      // TODO convert to map() instead of foreach() with a push()
       let fetchRoadsignConceptTasks = [];
       newRoadSigns.forEach((newRoadSign) => {
         fetchRoadsignConceptTasks.push(this.get('fetchRoadsignConcept').perform(newRoadSign));
       });
 
+      // TODO create objects with a roadsign and the related roadsign concept and pass that object in the hint card
+      // It will make the logic in the hint card less complex (where you have to look up the roadsignconcept in the list of all concepts)
+
       const newRoadsignsConcepts = yield all(fetchRoadsignConceptTasks);
 
-      // To avoid scattering of the hint (yellow on different places), we need to find, within the context path,
-      // the highest node, so the whole besluit:AanvullendReglement is yellow as block.
+      // TODO rename 'besluitBlock' to 'aanvullendReglementNode' to indicate it's a RichNode, not an RdfaBlock
       const besluitBlock = rdfaBlocks.find(r => {
         const rdfaAttributes = r.semanticNode.rdfaAttributes || {};
         return rdfaAttributes.resource == aanvullendReglement && rdfaAttributes.typeof.includes("http://data.vlaanderen.be/ns/besluit#AanvullendReglement");
       }).semanticNode;
 
       hintsRegistry.removeHintsInRegion(besluitBlock.region, hrId, this.get('who'));
+
+      // TODO remove generateHintsForContext and use generateCard directly instead
+      // The intermediate hints objects created by generateHintsForContext don't have any added value, but only add complexity
       hints.pushObjects(this.generateHintsForContext(besluitBlock, aanvullendReglement, besluitBlock.region, newRoadSigns, newRoadsignsConcepts));
     }
 
@@ -107,8 +120,10 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
   detectRoadsignsInMap(besluitUri, besluitTriples) {
     let roadsigns = A([]);
 
+    // TODO map 'subject' property of the resulting array since that's the only property that is used in the remaining code
     const opstellingTriples = besluitTriples.filter (t => t.predicate === 'a' && t.object === `${this.mobiliteit}Opstelling`);
 
+    // TODO use map() instead of for-loop with pushObject()
     for (let { subject } of opstellingTriples) {
       const infrastructuurRoadSign = (besluitTriples.find(t => t.subject === subject && t.predicate === `${this.mobiliteit}omvatVerkeersbord`)).object;
       const roadsign = (besluitTriples.find(t => t.subject === infrastructuurRoadSign && t.predicate === `${this.mobiliteit}realiseert`)).object;
@@ -133,8 +148,14 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     return roadsigns;
   },
 
+  // TODO rename to 'detectRoadsignsInDecision'
   detectRoadsignsInDecisions(besluitTriples) {
+    // TODO We cannot rely on mobiliteit:wordtAangeduidDoor only to detect roadsigns in decisions
+    // It might be that the roadsigns are not wrapped yet in a Mobilieitsmaatregel
+    // We will define a custom predicate ext:roadsign to temporarely link a roadsign to an article
+    // Both predicates mobiliteit:wordtAangeduidDoor and ext:roadsign must be checked here
     const roadSignTriples = (besluitTriples.filter(t => t.predicate === `${this.mobiliteit}wordtAangeduidDoor`));
+    // TODO use map() instead of for-loop with pushObject()
     let roadsigns = A([]);
     for (let { object } of roadSignTriples) {
       roadsigns.pushObject(EmberObject.create({
