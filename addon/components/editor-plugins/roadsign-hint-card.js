@@ -54,20 +54,22 @@ export default Component.extend({
   async didReceiveAttrs() {
     // TODO The result of selectContext cannot be used. It can only be passed to the editor.update() method
     // We should create separate hint cards per Article that show the 'Insert in article' button
-    // TODO select by typeof 'ext:MobiliteitsmaatregelArtikel' instead of by property
+
     const articleNodes = this.editor.selectContext(this.editor.currentSelection, {
       scope: "auto",
-      property: "http://data.europa.eu/eli/ontology#has_part"
+      typeof: "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"
     });
     this.set('articleNodes', articleNodes);
 
     for (let roadsign of this.unreferencedRoadsigns) {
       const [lat, lon] = this.addressregister.getLatLon(roadsign.point);
       const address = await this.addressregister.getLocation(lat, lon);
+
       if(address && address.length > 0) {
         roadsign.set('address', address.firstObject.fullAddress);
+      } else {
+        roadsign.set('address', roadsign.point);
       }
-      // TODO fallback to display geo-coordinates if no address is found
     }
   },
 
@@ -90,7 +92,7 @@ export default Component.extend({
         <span class="annotation article-number" property="eli:number">Artikel ${newArticleNumber}.</span>
         <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
         <span class="annotation article-content" property="prov:value">
-          <span property="mobiliteit:wordtAangeduidDoor" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
+          <span property="ext:roadsign" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
             <span property="dc:description">
               ${definition}
             </span>
@@ -111,18 +113,12 @@ export default Component.extend({
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 
       const triples = this.editor.triplesDefinedInResource(this.info.besluitUri);
-      // TODO Filter part can be written in a shorter form by just returning the if-clause
       const articles = triples.filter((triple) => {
-        if (triple.predicate == "http://data.europa.eu/eli/ontology#has_part") {
-          return true;
-        }
+        return triple.predicate == "http://data.europa.eu/eli/ontology#has_part";
       }).map((triple) => triple.object);
 
-      // TODO Filter part can be written in a shorter form by just returning the if-clause
       const articlesNumberTriples = triples.filter((triple) => {
-        if (articles.includes(triple.subject) && triple.predicate == "http://data.europa.eu/eli/ontology#number") {
-          return true;
-        }
+        return articles.includes(triple.subject) && triple.predicate == "http://data.europa.eu/eli/ontology#number";
       });
       const sortedArticles = articlesNumberTriples.sortBy("object");
 
@@ -140,7 +136,7 @@ export default Component.extend({
         this.editor.update(decision, {
           append: {
             resource: uri,
-            typeof: ["besluit:Artikel", "ext:MobiliteitsmaatregelArtikel"],
+            typeof: ["http://data.vlaanderen.be/ns/besluit#Artikel", "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"],
             property: "eli:has_part",
             innerHTML
           }
@@ -157,7 +153,7 @@ export default Component.extend({
         this.editor.update(lastArticle, {
           after: {
             resource: uri,
-            typeof: ["besluit:Artikel", "ext:MobiliteitsmaatregelArtikel"],
+            typeof: ["http://data.vlaanderen.be/ns/besluit#Artikel", "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"],
             property: "eli:has_part",
             innerHTML
           }
@@ -184,13 +180,11 @@ export default Component.extend({
           <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
         </span>`;
 
-      // TODO replace mobiliteit:wordtAangeduidDoor with a temporary predicate like ext:roadsign that links the Article to the roadsign
-      // until the roadsigns are wrapped in a mobiliteit:Mobiliteitsmaatregel. When wrappen in a Mobiliteitsmaatregel, mobiliteit:wordtAangeduidDoor can be used
       this.editor.update(this.articleNodes, {
         append: {
           resource: roadsign.uri,
           typeof: "mobiliteit:Verkeersteken",
-          property: "mobiliteit:wordtAangeduidDoor",
+          property: "ext:roadsign",
           innerHTML: roadsignHtml
         }
       });
