@@ -13,8 +13,6 @@ const mobiliteit = 'https://data.vlaanderen.be/ns/mobiliteit#';
 const infrastructuur = 'https://data.vlaanderen.be/ns/openbaardomein/infrastructuur#';
 const ext = 'http://mu.semte.ch/vocabularies/ext/';
 
-// TODO document methods
-
 /**
  * Service responsible for correct annotations of road signs
  *
@@ -31,6 +29,17 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     getOwner(this).resolveRegistration('config:environment');
   },
 
+  /**
+   * task to fetch the roadsignConcept of a roadsign
+   *
+   * @method fetchRoadsignConcept
+   *
+   * @param {Object} roadsign The roadsign instance
+   *
+   * @return {Object} The roadsignConcept
+   *
+   * @private
+   */
   fetchRoadsignConcept: task(function * (roadsign) {
     const conceptUri = roadsign.roadsignConcept;
     const queryParams = {
@@ -103,6 +112,17 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     }
   }),
 
+  /**
+   * Get an array of regulations found in the triples stored in rdfaBlocks
+   *
+   * @method getUniqueAanvullendReglementen
+   *
+   * @param {Array} rdfaBlocks The rdfa blocks in which we will search for regulations
+   *
+   * @return {Array} The deduplicated regulations found in the rdfa blocks.
+   *
+   * @private
+   */
   getUniqueAanvullendReglementen(rdfaBlocks) {
     const uniqueAanvullendReglementen = new Set();
     rdfaBlocks.forEach(rdfaBlock => {
@@ -115,6 +135,18 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     return uniqueAanvullendReglementen;
   },
 
+  /**
+   * Find the roadsigns in the rdfa of a map
+   *
+   * @method detectRoadsignsInMap
+   *
+   * @param {string} besluitUri The URI of the decision in which we search for the roadsigns
+   * @param {Object} besluitTriples The triples of the decision
+   *
+   * @return {Array} The roadsigns found in a map
+   *
+   * @private
+   */
   detectRoadsignsInMap(besluitUri, besluitTriples) {
     const opstellingen = besluitTriples.filter (t => t.predicate === 'a' && t.object === `${mobiliteit}Opstelling`).map(opstelling => opstelling.subject);
 
@@ -142,12 +174,36 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     return roadsigns;
   },
 
+  /**
+   * Find the roadsigns in the rdfa of a decision (that are not in a map)
+   *
+   * @method detectRoadsignsInDecision
+   *
+   * @param {Object} besluitTriples The triples of the decision
+   *
+   * @return {Array} The roadsigns found in the decision
+   *
+   * @private
+   */
   detectRoadsignsInDecision(besluitTriples) {
     const roadsignTriples = (besluitTriples.filter(t => t.predicate === `${mobiliteit}wordtAangeduidDoor` || t.predicate === `${ext}roadsign`));
     const roadsigns = roadsignTriples.map(roadsignTriple => EmberObject.create({ uri: roadsignTriple.object }) );
     return roadsigns;
   },
 
+  /**
+   * Find the roadsigns that are in a map but not in a decision, which means that
+   * those roadsigns need to be displayed by the addon.
+   *
+   * @method findUnreferencedRoadsigns
+   *
+   * @param {Object} editor The RDFa editor instance
+   * @param {string} besluitUri The URI of the decision in which we search for the roadsigns
+   *
+   * @return {Array} The roadsigns referenced in the map but unreferenced in the decisions
+   *
+   * @private
+   */
   findUnreferencedRoadsigns(editor, besluitUri) {
     const triples = editor.triplesDefinedInResource( besluitUri );
     const detectRoadsignsInMap = this.detectRoadsignsInMap(besluitUri, triples);
