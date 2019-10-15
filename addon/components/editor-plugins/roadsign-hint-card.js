@@ -49,11 +49,17 @@ export default Component.extend({
   */
   hintsRegistry: reads('info.hintsRegistry'),
 
-  roadsigns: reads('hintPlugin.roadsigns'),
+  /**
+   * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
+   */
+  unreferencedRoadsignsAndConcepts: reads('info.unreferencedRoadsignsAndConcepts'),
 
   async didReceiveAttrs() {
     // TODO The result of selectContext cannot be used. It can only be passed to the editor.update() method
     // We should create separate hint cards per Article that show the 'Insert in article' button
+
+    // TODO When the hint card will only be for one roadsign, some logic can be simplified
+    // because roadsigns => roadsign (ex. we can create : concept: reads('info.unreferencedRoadsignAndConcept.concept'),
 
     const articleNodes = this.editor.selectContext(this.editor.currentSelection, {
       scope: "auto",
@@ -61,31 +67,21 @@ export default Component.extend({
     });
     this.set('articleNodes', articleNodes);
 
-    for (let roadsign of this.unreferencedRoadsigns) {
-      const [lat, lon] = this.addressregister.getLatLon(roadsign.point);
+    for (let roadsignAndConcept of this.unreferencedRoadsignsAndConcepts) {
+      const [lat, lon] = this.addressregister.getLatLon(roadsignAndConcept.roadsign.point);
       const address = await this.addressregister.getLocation(lat, lon);
 
       if(address && address.length > 0) {
-        roadsign.set('address', address.firstObject.fullAddress);
+        roadsignAndConcept.roadsign.set('address', address.firstObject.fullAddress);
       } else {
-        roadsign.set('address', roadsign.point);
+        roadsignAndConcept.roadsign.set('address', roadsignAndConcept.roadsign.point);
       }
     }
   },
 
-  /**
-   * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
-   */
-  unreferencedRoadsigns: reads('info.unreferencedRoadsigns'),
-
-  getConcept: function(roadsign) {
-    return this.info.unreferencedRoadsignConcepts.find(unreferencedRoadsignConcept =>
-      unreferencedRoadsignConcept.id === roadsign.roadsignConcept.substring(roadsign.roadsignConcept.lastIndexOf('/') + 1)
-    );
-  },
-
-  generateArticleHtml: function(uri, roadsign, newArticleNumber, address) {
-    const concept = this.getConcept(roadsign);
+  generateArticleHtml: function(uri, roadsignAndConcept, newArticleNumber) {
+    const roadsign = roadsignAndConcept.roadsign;
+    const concept = roadsignAndConcept.roadsignConcept;
     const definition = concept ? concept.betekenis : "";
 
     const innerArtikelHtml = `
@@ -96,7 +92,7 @@ export default Component.extend({
             <span property="dc:description">
               ${definition}
             </span>
-            ter hoogte van ${address}
+            ter hoogte van ${roadsign.address}
             <span property="mobiliteit:isBeginZone" content="${roadsign.isBeginZone || false}" datatype="xsd:boolean"></span>
             <span property="mobiliteit:isEindeZone" content="${roadsign.isEindeZone || false}" datatype="xsd:boolean"></span>
             <span property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
@@ -109,7 +105,7 @@ export default Component.extend({
   },
 
   actions: {
-    insert(roadsign, address) {
+    insert(roadsignAndConcept) {
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 
       const triples = this.editor.triplesDefinedInResource(this.info.besluitUri);
@@ -131,7 +127,7 @@ export default Component.extend({
         });
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber, address);
+        const innerHTML = this.generateArticleHtml(uri, roadsignAndConcept, newArticleNumber);
 
         this.editor.update(decision, {
           append: {
@@ -148,7 +144,7 @@ export default Component.extend({
         });
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber, address);
+        const innerHTML = this.generateArticleHtml(uri, roadsignAndConcept, newArticleNumber);
 
         this.editor.update(lastArticle, {
           after: {
@@ -164,10 +160,11 @@ export default Component.extend({
       // this.get('editor').replaceTextWithHTML(...mappedLocation, this.get('info').htmlString);
     },
 
-    addToArticle(roadsign, address) {
+    addToArticle(roadsignAndConcept) {
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 
-      const concept = this.getConcept(roadsign);
+      const roadsign = roadsignAndConcept.roadsign;
+      const concept = roadsignAndConcept.roadsignConcept;
       const definition = concept ? concept.betekenis : "";
 
       const roadsignHtml = `
@@ -175,7 +172,7 @@ export default Component.extend({
         <span property="dc:description">
           ${definition}
         </span>
-        ter hoogte van ${address}
+        ter hoogte van ${roadsign.address}
         <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
           <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
         </span>`;

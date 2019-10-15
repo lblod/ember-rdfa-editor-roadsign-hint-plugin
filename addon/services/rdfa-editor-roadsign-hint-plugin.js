@@ -30,22 +30,27 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
   },
 
   /**
-   * task to fetch the roadsignConcept of a roadsign
+   * task to create an object containing a roadsign and its roadsignConcept
    *
-   * @method fetchRoadsignConcept
+   * @method createRoadsignWithConcept
    *
    * @param {Object} roadsign The roadsign instance
    *
-   * @return {Object} The roadsignConcept
+   * @return {Object} An object containing the roadsign and the roadsignConcept
    *
    * @private
    */
-  fetchRoadsignConcept: task(function * (roadsign) {
+  createRoadsignWithConcept: task(function * (roadsign) {
     const conceptUri = roadsign.roadsignConcept;
     const queryParams = {
       'filter[:uri:]': conceptUri
     };
-    return (yield this.store.query('verkeersbordconcept', queryParams)).firstObject;
+    const concept = (yield this.store.query('verkeersbordconcept', queryParams)).firstObject
+
+    return EmberObject.create({
+      roadsign: roadsign,
+      roadsignConcept: concept
+    });
   }),
 
   /**
@@ -65,18 +70,17 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
     const uniqueAanvullendReglementen = this.getUniqueAanvullendReglementen(rdfaBlocks);
 
+    let roadSignsPerAanvullendReglement = {};
+
     for (let aanvullendReglement of uniqueAanvullendReglementen) {
       const newRoadSigns = this.findUnreferencedRoadsigns(editor, aanvullendReglement);
-      roadSignsPerBesluit[aanvullendReglement] = { newRoadSigns, regions: [] };
+      // TODO check if roadSignsPerAanvullendReglement is really useful, if not remove it
+      roadSignsPerAanvullendReglement[aanvullendReglement] = { newRoadSigns, regions: [] };
 
       if(newRoadSigns.length === 0) continue;
 
-      const fetchRoadsignConceptTasks = newRoadSigns.map(newRoadSign => this.get('fetchRoadsignConcept').perform(newRoadSign));
-
-      // TODO create objects with a roadsign and the related roadsign concept and pass that object in the hint card
-      // It will make the logic in the hint card less complex (where you have to look up the roadsignconcept in the list of all concepts)
-
-      const newRoadsignsConcepts = yield all(fetchRoadsignConceptTasks);
+      const createRoadsignWithConceptTasks = newRoadSigns.map(newRoadSign => this.get('createRoadsignWithConcept').perform(newRoadSign));
+      const roadsignWithConcept = yield all(createRoadsignWithConceptTasks);
 
       const aanvullendReglementNode = rdfaBlocks.find(r => {
         const rdfaAttributes = r.semanticNode.rdfaAttributes || {};
@@ -87,7 +91,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
       // TODO remove generateHintsForContext and use generateCard directly instead
       // The intermediate hints objects created by generateHintsForContext don't have any added value, but only add complexity
-      hints.pushObjects(this.generateHintsForContext(aanvullendReglementNode, aanvullendReglement, aanvullendReglementNode.region, newRoadSigns, newRoadsignsConcepts));
+      hints.pushObjects(this.generateHintsForContext(aanvullendReglementNode, aanvullendReglement, aanvullendReglementNode.region, roadsignWithConcept));
     }
 
     const cards = hints.map( hint => this.generateCard(hrId, hintsRegistry, editor, hint) );
@@ -219,8 +223,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     return EmberObject.create({
       info: {
         label: this.get('who'),
-        unreferencedRoadsigns: hint.unreferencedRoadsigns,
-        unreferencedRoadsignConcepts: hint.unreferencedRoadsignConcepts,
+        unreferencedRoadsignsAndConcepts: hint.unreferencedRoadsignsAndConcepts,
         plainValue: hint.text,
         location: hint.location,
         besluitUri: hint.resource,
@@ -242,11 +245,11 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    *
    * @private
    */
-  generateHintsForContext(context, uri, location, unreferencedRoadsigns, unreferencedRoadsignConcepts){
+  generateHintsForContext(context, uri, location, unreferencedRoadsignsAndConcepts){
     const hints = [];
     const resource = uri;
     const text = context.text || '';
-    hints.push({ text, location, context, resource, unreferencedRoadsigns, unreferencedRoadsignConcepts });
+    hints.push({ text, location, context, resource, unreferencedRoadsignsAndConcepts });
 
     return hints;
   }
