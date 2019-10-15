@@ -65,25 +65,9 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
     const uniqueAanvullendReglementen = this.getUniqueAanvullendReglementen(rdfaBlocks);
 
-    // TODO remove the caching construction with 'roadSignsPerBesluit'. Since we have a unique set of aanvullende reglementen,
-    // we're sure we will scan each besluit only once
-    // We only want to scan once for this subject, as the document won't have changed
-    // within the processing of the loop.
-    // We store the result in an intermediate variable, so this can be re-used in next iteration.
-    // It wil contain:
-    // { besluitUri : { newRoadSigns, regions }}
-
-    let roadSignsPerBesluit = {};
-
     for (let aanvullendReglement of uniqueAanvullendReglementen) {
-      let newRoadSigns = [];
-      if(roadSignsPerBesluit[aanvullendReglement]){
-        newRoadSigns = roadSignsPerBesluit[aanvullendReglement].newRoadSigns;
-      }
-      else {
-        newRoadSigns = this.findUnreferencedRoadsigns(editor, aanvullendReglement);
-        roadSignsPerBesluit[aanvullendReglement] = { newRoadSigns, regions: [] };
-      }
+      const newRoadSigns = this.findUnreferencedRoadsigns(editor, aanvullendReglement);
+      roadSignsPerBesluit[aanvullendReglement] = { newRoadSigns, regions: [] };
 
       if(newRoadSigns.length === 0) continue;
 
