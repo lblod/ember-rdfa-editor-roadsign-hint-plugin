@@ -10,20 +10,20 @@
 
 <div class="modal-dialog__content modal-dialog__content--sectioned">
   <ul class="link-list link-list--bordered">
-    {{#each unreferencedRoadsigns as |roadsign|}}
+    {{#each unreferencedRoadsignsAndConcepts as |roadsignAndConcept|}}
       <li class="link-list__item u-padding--round--tiny">
         <div class="grid">
           <div class="col--3-12">
             <div>
-              {{editor-plugins/roadsign-image roadsign=roadsign concepts=info.unreferencedRoadsignConcepts}}
+              {{editor-plugins/roadsign-image roadsignConcept=roadsignAndConcept.roadsignConcept}}
             </div>
           </div>
           <div class="col--9-12">
-            {{roadsign.address}}
+            {{roadsignAndConcept.roadsign.address}}
             {{#wu-button-group}}
-              {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsign roadsign.address) class="button--narrow button--small u-spacer--bottom--tinier"}}
+              {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsignAndConcept) class="button--narrow button--small u-spacer--bottom--tinier"}}
               {{#if articleNodes.selections.length}}
-                {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsign roadsign.address) class="button--narrow button--alt button--small u-spacer--bottom--tinier"}}
+                {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsignAndConcept) class="button--narrow button--alt button--small u-spacer--bottom--tinier"}}
               {{/if}}
             {{/wu-button-group}}
           </div>

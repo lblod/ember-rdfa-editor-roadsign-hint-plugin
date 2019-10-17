@@ -49,86 +49,77 @@ export default Component.extend({
   */
   hintsRegistry: reads('info.hintsRegistry'),
 
-  roadsigns: reads('hintPlugin.roadsigns'),
+  /**
+   * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
+   */
+  unreferencedRoadsignsAndConcepts: reads('info.unreferencedRoadsignsAndConcepts'),
 
   async didReceiveAttrs() {
     // TODO The result of selectContext cannot be used. It can only be passed to the editor.update() method
     // We should create separate hint cards per Article that show the 'Insert in article' button
-    // TODO select by typeof 'ext:MobiliteitsmaatregelArtikel' instead of by property
+
+    // TODO When the hint card will only be for one roadsign, some logic can be simplified
+    // because roadsigns => roadsign (ex. we can create : concept: reads('info.unreferencedRoadsignAndConcept.concept'),
+
     const articleNodes = this.editor.selectContext(this.editor.currentSelection, {
       scope: "auto",
-      property: "http://data.europa.eu/eli/ontology#has_part"
+      typeof: "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"
     });
     this.set('articleNodes', articleNodes);
 
-    for (let roadsign of this.unreferencedRoadsigns) {
-      const [lat, lon] = this.addressregister.getLatLon(roadsign.point);
+    for (let roadsignAndConcept of this.unreferencedRoadsignsAndConcepts) {
+      const [lat, lon] = this.addressregister.getLatLon(roadsignAndConcept.roadsign.point);
       const address = await this.addressregister.getLocation(lat, lon);
+
       if(address && address.length > 0) {
-        roadsign.set('address', address.firstObject.fullAddress);
+        roadsignAndConcept.roadsign.set('address', address.firstObject.fullAddress);
+      } else {
+        roadsignAndConcept.roadsign.set('address', roadsignAndConcept.roadsign.point);
       }
-      // TODO fallback to display geo-coordinates if no address is found
     }
   },
 
-  /**
-   * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
-   */
-  unreferencedRoadsigns: reads('info.unreferencedRoadsigns'),
-
-  getConcept: function(roadsign) {
-    return this.info.unreferencedRoadsignConcepts.find(unreferencedRoadsignConcept =>
-      unreferencedRoadsignConcept.id === roadsign.roadsignConcept.substring(roadsign.roadsignConcept.lastIndexOf('/') + 1)
-    );
-  },
-
-  generateArticleHtml: function(uri, roadsign, newArticleNumber, address) {
-    const concept = this.getConcept(roadsign);
+  generateArticleHtml: function(uri, roadsignAndConcept, newArticleNumber) {
+    const roadsign = roadsignAndConcept.roadsign;
+    const concept = roadsignAndConcept.roadsignConcept;
     const definition = concept ? concept.betekenis : "";
 
     const innerArtikelHtml = `
-        <span class="annotation article-number" property="eli:number">Artikel ${newArticleNumber}</span>
+        <span property="eli:number">Artikel ${newArticleNumber}</span>
         <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
         <div property="prov:value">
-          <div property="mobiliteit:wordtAangeduidDoor" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
+          <div property="ext:roadsign" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
           	<div class="grid grid--collapse">
           		<div class="col--3-12">
-		            <div property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
+		            <span property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
 		              <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
-		            </div>
+		            </span>
 	            </div>
           		<div class="col--9-12">
 		            <p property="dc:description">
 		              ${definition}
 		            </p>
-		            <p>Ter hoogte van ${address}.</p>
+		            <p>Ter hoogte van ${roadsign.address}.</p>
 		            <span property="mobiliteit:isBeginZone" content="${roadsign.isBeginZone || false}" datatype="xsd:boolean"></span>
 		            <span property="mobiliteit:isEindeZone" content="${roadsign.isEindeZone || false}" datatype="xsd:boolean"></span>
 		          </div>
 	          </div>
           </div>
         </div>`;
-
     return innerArtikelHtml;
   },
 
   actions: {
-    insert(roadsign, address) {
+    insert(roadsignAndConcept) {
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 
       const triples = this.editor.triplesDefinedInResource(this.info.besluitUri);
-      // TODO Filter part can be written in a shorter form by just returning the if-clause
       const articles = triples.filter((triple) => {
-        if (triple.predicate == "http://data.europa.eu/eli/ontology#has_part") {
-          return true;
-        }
+        return triple.predicate == "http://data.europa.eu/eli/ontology#has_part";
       }).map((triple) => triple.object);
 
-      // TODO Filter part can be written in a shorter form by just returning the if-clause
       const articlesNumberTriples = triples.filter((triple) => {
-        if (articles.includes(triple.subject) && triple.predicate == "http://data.europa.eu/eli/ontology#number") {
-          return true;
-        }
+        return articles.includes(triple.subject) && triple.predicate == "http://data.europa.eu/eli/ontology#number";
       });
       const sortedArticles = articlesNumberTriples.sortBy("object");
 
@@ -141,12 +132,12 @@ export default Component.extend({
         });
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber, address);
+        const innerHTML = this.generateArticleHtml(uri, roadsignAndConcept, newArticleNumber);
 
         this.editor.update(decision, {
           append: {
             resource: uri,
-            typeof: ["besluit:Artikel", "ext:MobiliteitsmaatregelArtikel"],
+            typeof: ["http://data.vlaanderen.be/ns/besluit#Artikel", "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"],
             property: "eli:has_part",
             innerHTML
           }
@@ -158,12 +149,12 @@ export default Component.extend({
         });
 
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = this.generateArticleHtml(uri, roadsign, newArticleNumber, address);
+        const innerHTML = this.generateArticleHtml(uri, roadsignAndConcept, newArticleNumber);
 
         this.editor.update(lastArticle, {
           after: {
             resource: uri,
-            typeof: ["besluit:Artikel", "ext:MobiliteitsmaatregelArtikel"],
+            typeof: ["http://data.vlaanderen.be/ns/besluit#Artikel", "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"],
             property: "eli:has_part",
             innerHTML
           }
@@ -174,10 +165,11 @@ export default Component.extend({
       // this.get('editor').replaceTextWithHTML(...mappedLocation, this.get('info').htmlString);
     },
 
-    addToArticle(roadsign, address) {
+    addToArticle(roadsignAndConcept) {
       this.get('hintsRegistry').removeHintsAtLocation(this.get('location'), this.get('hrId'), 'editor-plugins/roadsign-hint-card');
 
-      const concept = this.getConcept(roadsign);
+      const roadsign = roadsignAndConcept.roadsign;
+      const concept = roadsignAndConcept.roadsignConcept;
       const definition = concept ? concept.betekenis : "";
 
       const roadsignHtml = `
@@ -192,17 +184,15 @@ export default Component.extend({
 		        <p property="dc:description">
 		          ${definition}
 		        </p>
-		        <p>Ter hoogte van ${address}.</p>
-      		</div>
+		        <p>Ter hoogte van ${roadsign.address}.</p>
+		      </div>
 		    </div>`;
 
-      // TODO replace mobiliteit:wordtAangeduidDoor with a temporary predicate like ext:roadsign that links the Article to the roadsign
-      // until the roadsigns are wrapped in a mobiliteit:Mobiliteitsmaatregel. When wrappen in a Mobiliteitsmaatregel, mobiliteit:wordtAangeduidDoor can be used
       this.editor.update(this.articleNodes, {
         append: {
           resource: roadsign.uri,
           typeof: "mobiliteit:Verkeersteken",
-          property: "mobiliteit:wordtAangeduidDoor",
+          property: "ext:roadsign",
           innerHTML: roadsignHtml
         }
       });
