@@ -45,7 +45,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     const queryParams = {
       'filter[:uri:]': conceptUri
     };
-    const concept = (yield this.store.query('verkeersbordconcept', queryParams)).firstObject
+    const concept = (yield this.store.query('verkeersbordconcept', queryParams)).firstObject;
 
     return EmberObject.create({
       roadsign: roadsign,
@@ -68,11 +68,14 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
   execute: task(function * (hrId, rdfaBlocks, hintsRegistry, editor) {
     const hints = [];
 
+    // TODO once the interface of the context scanner has been updated, the plugin should be able
+    // to select the RichNode that contains the Aanvullend Reglement resource URI in a simple way.
+    // For now the plugin has to walk up the semantic node of the RdfaBlocks until it reaches that RichNode
     const uniqueAanvullendReglementen = this.getUniqueAanvullendReglementen(rdfaBlocks);
 
     let roadSignsPerAanvullendReglement = {};
 
-    for (let aanvullendReglement of uniqueAanvullendReglementen) {
+    for (let aanvullendReglement of Object.keys(uniqueAanvullendReglementen)) {
       const newRoadSigns = this.findUnreferencedRoadsigns(editor, aanvullendReglement);
       // TODO check if roadSignsPerAanvullendReglement is really useful, if not remove it
       roadSignsPerAanvullendReglement[aanvullendReglement] = { newRoadSigns, regions: [] };
@@ -82,16 +85,16 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       const createRoadsignWithConceptTasks = newRoadSigns.map(newRoadSign => this.get('createRoadsignWithConcept').perform(newRoadSign));
       const roadsignWithConcept = yield all(createRoadsignWithConceptTasks);
 
-      const aanvullendReglementNode = rdfaBlocks.find(r => {
-        const rdfaAttributes = r.semanticNode.rdfaAttributes || {};
-        return rdfaAttributes.resource == aanvullendReglement && rdfaAttributes.typeof.includes("http://data.vlaanderen.be/ns/besluit#AanvullendReglement");
-      }).semanticNode;
+      const descendentBlockOfAanvullendReglement = uniqueAanvullendReglementen[aanvullendReglement][0];
+      const aanvullendReglementNode = this.getAanvullendReglementNode(aanvullendReglement, descendentBlockOfAanvullendReglement);
 
-      hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.get('who'));
+      if (aanvullendReglementNode) {
+        hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.get('who'));
 
-      // TODO remove generateHintsForContext and use generateCard directly instead
-      // The intermediate hints objects created by generateHintsForContext don't have any added value, but only add complexity
-      hints.pushObjects(this.generateHintsForContext(aanvullendReglementNode, aanvullendReglement, aanvullendReglementNode.region, roadsignWithConcept));
+        // TODO remove generateHintsForContext and use generateCard directly instead
+        // The intermediate hints objects created by generateHintsForContext don't have any added value, but only add complexity
+        hints.pushObjects(this.generateHintsForContext(aanvullendReglementNode, aanvullendReglement, aanvullendReglementNode.region, roadsignWithConcept));
+      }
     }
 
     const cards = hints.map( hint => this.generateCard(hrId, hintsRegistry, editor, hint) );
@@ -99,6 +102,25 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       hintsRegistry.addHints(hrId, this.get('who'), cards);
     }
   }),
+
+  /**
+   * Get the parent node of a given RdfaBlock that represents the Aanvullend Reglement
+  */
+  getAanvullendReglementNode(regulationUri, rdfaBlock) {
+    let currentNode = rdfaBlock.semanticNode;
+
+    const isAanvullendReglementNode = function (richNode) {
+      const rdfaAttributes = richNode.rdfaAttributes || {};
+      return rdfaAttributes.resource == regulationUri
+        && rdfaAttributes.typeof.includes("http://data.vlaanderen.be/ns/besluit#AanvullendReglement");
+    };
+
+    while (currentNode && !isAanvullendReglementNode(currentNode)) {
+      currentNode = currentNode.parent;
+    }
+
+    return currentNode;
+  },
 
   /**
    * Get an array of regulations found in the triples stored in rdfaBlocks
@@ -112,15 +134,20 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @private
    */
   getUniqueAanvullendReglementen(rdfaBlocks) {
-    const uniqueAanvullendReglementen = new Set();
+    const regulations = {};
     rdfaBlocks.forEach(rdfaBlock => {
       rdfaBlock.context.forEach(triple => {
         if (triple.object === 'http://data.vlaanderen.be/ns/besluit#AanvullendReglement' && triple.predicate === 'a') {
-          uniqueAanvullendReglementen.add(triple.subject);
+          const regulationUri = triple.subject;
+          if (regulations[regulationUri]) {
+            regulations[regulationUri].push(rdfaBlock);
+          } else {
+            regulations[regulationUri] = [ rdfaBlock ];
+          }
         }
       });
     });
-    return uniqueAanvullendReglementen;
+    return regulations;
   },
 
   /**
