@@ -87,21 +87,27 @@ export default Component.extend({
     const definition = concept ? concept.betekenis : "";
 
     const innerArtikelHtml = `
-        <span class="annotation article-number" property="eli:number">Artikel ${newArticleNumber}.</span>
+        <span class="annotation article-number" property="eli:number">Artikel ${newArticleNumber}</span>
         <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
-        <span class="annotation article-content" property="prov:value">
-          <span property="mobiliteit:wordtAangeduidDoor" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
-            <span property="dc:description">
-              ${definition}
-            </span>
-            ter hoogte van ${address}
-            <span property="mobiliteit:isBeginZone" content="${roadsign.isBeginZone || false}" datatype="xsd:boolean"></span>
-            <span property="mobiliteit:isEindeZone" content="${roadsign.isEindeZone || false}" datatype="xsd:boolean"></span>
-            <span property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
-              <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
-            </span>
-          </span>
-        </span>`;
+        <div property="prov:value">
+          <div property="mobiliteit:wordtAangeduidDoor" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
+          	<div class="grid grid--collapse">
+          		<div class="col--3-12">
+		            <div property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
+		              <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
+		            </div>
+	            </div>
+          		<div class="col--9-12">
+		            <p property="dc:description">
+		              ${definition}
+		            </p>
+		            <p>Ter hoogte van ${address}.</p>
+		            <span property="mobiliteit:isBeginZone" content="${roadsign.isBeginZone || false}" datatype="xsd:boolean"></span>
+		            <span property="mobiliteit:isEindeZone" content="${roadsign.isEindeZone || false}" datatype="xsd:boolean"></span>
+		          </div>
+	          </div>
+          </div>
+        </div>`;
 
     return innerArtikelHtml;
   },
@@ -176,13 +182,19 @@ export default Component.extend({
 
       const roadsignHtml = `
         <br>
-        <span property="dc:description">
-          ${definition}
-        </span>
-        ter hoogte van ${address}
-        <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
-          <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
-        </span>`;
+      	<div class="grid grid--collapse">
+      		<div class="col--3-12">
+		        <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
+		          <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
+		        </span>
+		      </div>
+      		<div class="col--9-12">
+		        <p property="dc:description">
+		          ${definition}
+		        </p>
+		        <p>Ter hoogte van ${address}.</p>
+      		</div>
+		    </div>`;
 
       // TODO replace mobiliteit:wordtAangeduidDoor with a temporary predicate like ext:roadsign that links the Article to the roadsign
       // until the roadsigns are wrapped in a mobiliteit:Mobiliteitsmaatregel. When wrappen in a Mobiliteitsmaatregel, mobiliteit:wordtAangeduidDoor can be used
