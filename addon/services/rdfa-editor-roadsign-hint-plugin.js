@@ -3,14 +3,11 @@ import { getOwner } from '@ember/application';
 import Service from '@ember/service';
 import EmberObject from '@ember/object';
 import { task, all } from 'ember-concurrency';
-import { A }  from '@ember/array';
 import { inject as service } from '@ember/service';
 
-const besluit = 'http://data.vlaanderen.be/ns/besluit#';
 const geosparql = 'http://www.opengis.net/ont/geosparql#';
 const locn = 'http://www.w3.org/ns/locn#';
 const mobiliteit = 'https://data.vlaanderen.be/ns/mobiliteit#';
-const infrastructuur = 'https://data.vlaanderen.be/ns/openbaardomein/infrastructuur#';
 const ext = 'http://mu.semte.ch/vocabularies/ext/';
 
 /**
@@ -202,7 +199,9 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    */
   detectRoadsignsInDecision(besluitTriples) {
     const roadsignTriples = (besluitTriples.filter(t => t.predicate === `${mobiliteit}wordtAangeduidDoor` || t.predicate === `${ext}roadsign`));
-    const roadsigns = roadsignTriples.map(roadsignTriple => EmberObject.create({ uri: roadsignTriple.object }) );
+    const roadsigns = roadsignTriples.map(roadsignTriple => EmberObject.create({
+      uri: roadsignTriple.object
+    }));
     return roadsigns;
   },
 
