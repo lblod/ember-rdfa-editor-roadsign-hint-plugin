@@ -52,7 +52,7 @@ export default Component.extend({
   /**
    * The array of all roadsings(mobiliteit:Verkeersteken) which are not referenced from any article
    */
-  unreferencedRoadsignsAndConcepts: reads('info.unreferencedRoadsignsAndConcepts'),
+  roadsignsWithConcepts: reads('info.roadsignsWithConcepts'),
 
   async didReceiveAttrs() {
     // TODO The result of selectContext cannot be used. It can only be passed to the editor.update() method
@@ -67,7 +67,7 @@ export default Component.extend({
     });
     this.set('articleNodes', articleNodes);
 
-    for (let roadsignAndConcept of this.unreferencedRoadsignsAndConcepts) {
+    for (let roadsignAndConcept of this.roadsignsWithConcepts) {
       const [lat, lon] = this.addressregister.getLatLon(roadsignAndConcept.roadsign.point);
       const address = await this.addressregister.getLocation(lat, lon);
 

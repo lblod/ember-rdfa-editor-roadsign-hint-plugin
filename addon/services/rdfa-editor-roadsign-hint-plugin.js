@@ -71,6 +71,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     const uniqueAanvullendReglementen = this.getUniqueAanvullendReglementen(rdfaBlocks);
 
     let roadSignsPerAanvullendReglement = {};
+    let cards = [];
 
     for (let aanvullendReglement of Object.keys(uniqueAanvullendReglementen)) {
       const newRoadSigns = this.findUnreferencedRoadsigns(editor, aanvullendReglement);
@@ -80,7 +81,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       if(newRoadSigns.length === 0) continue;
 
       const createRoadsignWithConceptTasks = newRoadSigns.map(newRoadSign => this.get('createRoadsignWithConcept').perform(newRoadSign));
-      const roadsignWithConcept = yield all(createRoadsignWithConceptTasks);
+      const roadsignsWithConcepts = yield all(createRoadsignWithConceptTasks);
 
       const descendentBlockOfAanvullendReglement = uniqueAanvullendReglementen[aanvullendReglement][0];
       const aanvullendReglementNode = this.getAanvullendReglementNode(aanvullendReglement, descendentBlockOfAanvullendReglement);
@@ -88,13 +89,18 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       if (aanvullendReglementNode) {
         hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.get('who'));
 
-        // TODO remove generateHintsForContext and use generateCard directly instead
-        // The intermediate hints objects created by generateHintsForContext don't have any added value, but only add complexity
-        hints.pushObjects(this.generateHintsForContext(aanvullendReglementNode, aanvullendReglement, aanvullendReglementNode.region, roadsignWithConcept));
+        const hint = EmberObject.create({
+          text: aanvullendReglementNode.text || '',
+          location: aanvullendReglementNode.region, // TODO: la location de l'article
+          context: aanvullendReglementNode,
+          resource: aanvullendReglement,
+          roadsignsWithConcepts: roadsignsWithConcepts
+        });
+        const card = this.generateCard(hrId, hintsRegistry, editor, hint);
+        cards.push(card);
       }
     }
 
-    const cards = hints.map( hint => this.generateCard(hrId, hintsRegistry, editor, hint) );
     if (cards.length > 0) {
       hintsRegistry.addHints(hrId, this.get('who'), cards);
     }
@@ -249,35 +255,17 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     return EmberObject.create({
       info: {
         label: this.get('who'),
-        unreferencedRoadsignsAndConcepts: hint.unreferencedRoadsignsAndConcepts,
+        roadsignsWithConcepts: hint.roadsignsWithConcepts,
         plainValue: hint.text,
         location: hint.location,
         besluitUri: hint.resource,
-        hrId, hintsRegistry, editor
+        hrId,
+        hintsRegistry,
+        editor
       },
       location: hint.location,
       card: this.get('who')
     });
-  },
-
-  /**
-   * Generates a hint, given a context
-   *
-   * @method generateHintsForContext
-   *
-   * @param {Object} context Text snippet at a specific location with an RDFa context
-   *
-   * @return {Object} [{dateString, location}]
-   *
-   * @private
-   */
-  generateHintsForContext(context, uri, location, unreferencedRoadsignsAndConcepts){
-    const hints = [];
-    const resource = uri;
-    const text = context.text || '';
-    hints.push({ text, location, context, resource, unreferencedRoadsignsAndConcepts });
-
-    return hints;
   }
 });
 
