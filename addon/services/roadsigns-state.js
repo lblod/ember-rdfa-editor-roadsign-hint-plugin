@@ -13,6 +13,29 @@ export default Service.extend({
   },
 
   /**
+   * Get all the roadsign related to a decision
+   *
+   * @method getRoadsignsWithConcepts
+   *
+   * @param string Uri of the decision
+   *
+   * @param {Array} roadsigns of the decision and their concepts
+   *
+   * @public
+   */
+
+  // TODO Use getRoadsignsWithConcepts to get only the roadsigns that are in the
+  // besluit of the hint card. It now gets all the roadsigns from all the besluiten.
+  // Currently not working because of the async init() (adding the readable addresses
+  // to the roadsigns)
+
+  // getRoadsignsWithConcepts(besluitUri) {
+  //   return this.roadsignsWithConcepts.filter( roadsign => {
+  //     (roadsign.besluitUri == besluitUri) ? true : false;
+  //   })
+  // },
+
+  /**
    * Remove a roadsign listed in the cards
    *
    * @method removeRoadsignInCards

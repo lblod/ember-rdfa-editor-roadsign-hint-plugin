@@ -99,6 +99,13 @@ export default Component.extend({
   },
 
   actions: {
+    // TODO - In this version of the plugin, the highlights are not correctly removed
+    // in the document. It has to do with the way the selectContext works (we should differenciate block/region)
+    // An easy way to fix it is to change the -1 to +1 here :
+    // (https://github.com/lblod/ember-rdfa-editor/blob/master/addon/utils/hints-registry.js#L546)
+    // But when we do this, all the cards are displaying (one for the decision
+    // and one per article) instead of being overlapped.
+
     insert(roadsignWithConcept) {
       const updatedLocation = this.hintsRegistry.updateLocationToCurrentIndex(this.hrId, this.location);
 
