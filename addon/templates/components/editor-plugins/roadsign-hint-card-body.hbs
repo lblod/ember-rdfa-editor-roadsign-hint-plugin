@@ -1,19 +1,19 @@
 <div class="modal-dialog__content modal-dialog__content--sectioned">
   <ul class="link-list link-list--bordered">
-    {{#each roadsignsWithConcepts as |roadsignAndConcept|}}
+    {{#each roadsignsWithConcepts as |roadsignWithConcept|}}
       <li class="link-list__item u-padding--round--tiny">
         <div class="grid">
           <div class="col--3-12">
             <div>
-              {{editor-plugins/roadsign-image roadsignConcept=roadsignAndConcept.roadsignConcept}}
+              {{editor-plugins/roadsign-image roadsignConcept=roadsignWithConcept.roadsignConcept}}
             </div>
           </div>
           <div class="col--9-12">
-            {{roadsignAndConcept.roadsign.address}}
+            {{roadsignWithConcept.roadsign.address}}
             {{#wu-button-group}}
-              {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsignAndConcept) class="button--narrow button--small u-spacer--bottom--tinier"}}
+              {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsignWithConcept) class="button--narrow button--small u-spacer--bottom--tinier"}}
               {{#if isHintFromArticle}}
-                {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsignAndConcept) class="button--narrow button--alt button--small u-spacer--bottom--tinier"}}
+                {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsignWithConcept) class="button--narrow button--alt button--small u-spacer--bottom--tinier"}}
               {{/if}}
             {{/wu-button-group}}
           </div>

@@ -50,15 +50,10 @@ export default Component.extend({
   */
   hintsRegistry: reads('info.hintsRegistry'),
 
-  /**
-   * The roadsigns and their concepts
-   * @property roadsignsWithConcepts
-   * @type {Array}
-   * @private
-  */
-  roadsignsWithConcepts: reads('roadsignsState.roadsignsWithConcepts'),
-
   async didReceiveAttrs() {
+    const roadsignsWithConcepts = this.roadsignsState.getRoadsignsWithConcepts(this.info.besluitUri);
+    this.set('roadsignsWithConcepts', await this.addAddressToRoadsigns(roadsignsWithConcepts))
+
     const updatedLocation = this.hintsRegistry.updateLocationToCurrentIndex(this.hrId, this.location);
 
     const articleNodes = this.editor.selectContext(updatedLocation, {
@@ -68,7 +63,44 @@ export default Component.extend({
     this.set('articleNodes', articleNodes);
   },
 
-  generateArticleHtml: function(uri, roadsignWithConcept, newArticleNumber) {
+  /**
+   * Add human readable addresses to the roadsign list
+   *
+   * @method addAddressToRoadsigns
+   *
+   * @param {Array} array of objects containing the roadsigns and their concepts
+   *
+   * @return {Array} array of objects containing the roadsigns with their addresses and their concepts
+   *
+   * @private
+   */
+  async addAddressToRoadsigns(roadsignsWithConcepts) {
+    for (let roadsignWithConcept of roadsignsWithConcepts) {
+      const [lat, lon] = this.addressregister.getLatLon(roadsignWithConcept.roadsign.point);
+      const address = await this.addressregister.getLocation(lat, lon);
+
+      if(address && address.length > 0) {
+        roadsignWithConcept.roadsign.set('address', address.firstObject.fullAddress);
+      } else {
+        roadsignWithConcept.roadsign.set('address', roadsignWithConcept.roadsign.point);
+      }
+    }
+    return roadsignsWithConcepts;
+  },
+
+  /**
+   * Generate the HTML content of an article
+   *
+   * @method generateArticleHtml
+   *
+   * @param {Array} array of objects containing the roadsigns and their concepts
+   * @param {integer} number of the article
+   *
+   * @return {string} HTML content of the artcile
+   *
+   * @private
+   */
+  generateArticleHtml: function(roadsignWithConcept, newArticleNumber) {
     const roadsign = roadsignWithConcept.roadsign;
     const concept = roadsignWithConcept.roadsignConcept;
     const definition = concept ? concept.betekenis : "";
@@ -128,9 +160,9 @@ export default Component.extend({
           resource: this.info.besluitUri
         });
 
-        const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = this.generateArticleHtml(uri, roadsignWithConcept, newArticleNumber);
+        const innerHTML = this.generateArticleHtml(roadsignWithConcept, newArticleNumber);
 
+        const uri = `http://data.lblod.info/id/artikels/${v4()}`;
         this.editor.update(decision, {
           append: {
             resource: uri,
@@ -145,9 +177,9 @@ export default Component.extend({
           resource: sortedArticles.get('lastObject').subject
         });
 
-        const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        const innerHTML = this.generateArticleHtml(uri, roadsignWithConcept, newArticleNumber);
+        const innerHTML = this.generateArticleHtml(roadsignWithConcept, newArticleNumber);
 
+        const uri = `http://data.lblod.info/id/artikels/${v4()}`;
         this.editor.update(lastArticle, {
           after: {
             resource: uri,
