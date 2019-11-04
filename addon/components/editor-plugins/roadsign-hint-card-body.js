@@ -190,7 +190,8 @@ export default Component.extend({
         });
       }
 
-      this.roadsignsState.removeRoadsignInCards(roadsignWithConcept);
+      this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
+      this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
     },
 
     addToArticle(roadsignWithConcept) {
@@ -223,7 +224,8 @@ export default Component.extend({
         }
       });
 
-      this.roadsignsState.removeRoadsignInCards(roadsignWithConcept);
+      this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
+      this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
     }
   }
 });

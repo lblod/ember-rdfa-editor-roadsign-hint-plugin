@@ -29,11 +29,14 @@ export default Service.extend({
    *
    * @method removeRoadsignInCards
    *
-   * @param {Object} object containing the roadsign and its concept
+   * @param {string} uri of the roadsign we want to remove
    *
    * @public
    */
-  removeRoadsignInCards(roadsignWithConcept) {
+  removeRoadsignInCards(roadsignUri) {
+    const roadsignWithConcept = this.roadsignsWithConcepts.find(roadsignWithConcept => {
+      return roadsignWithConcept.roadsign.uri == roadsignUri;
+    })
     this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
   }
 });
