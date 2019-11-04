@@ -79,7 +79,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       const descendentBlockOfAanvullendReglement = uniqueAanvullendReglementen[aanvullendReglement][0];
       const aanvullendReglementNode = this.getAanvullendReglementNode(aanvullendReglement, descendentBlockOfAanvullendReglement);
 
-      // if(newRoadSigns.length === 0) continue;
       if(newRoadSigns.length === 0) {
         hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.get('who'));
         hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.get('whoFromArticle'));
