@@ -95,12 +95,12 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
           for (let article of Object.keys(articlesInRdfaBlocks)) {
             const descendentBlockOfArticle = articlesInRdfaBlocks[article][0];
             const articleNode = this.getArticleNode(article, descendentBlockOfArticle);
-            const specificHint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode)
+            const specificHint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode);
             const specificCard = this.generateCardFromArticle(hrId, hintsRegistry, editor, specificHint);
             specificCards.push(specificCard);
           }
         } else {
-          const hint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts)
+          const hint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts);
           const card = this.generateCard(hrId, hintsRegistry, editor, hint);
           cards.push(card);
         }
