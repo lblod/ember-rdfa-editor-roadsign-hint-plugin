@@ -58,11 +58,11 @@ export default Component.extend({
     const [start, end] = this.location;
     const updatedLocation = this.hintsRegistry.updateLocationToCurrentIndex(this.hrId, [start, end + 1]);
 
-    const articleNodes = this.editor.selectContext(updatedLocation, {
+    const mobiliteitsmaatregelNodes = this.editor.selectContext(updatedLocation, {
       scope: "auto",
-      typeof: "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"
+      typeof: "https://data.vlaanderen.be/ns/mobiliteit#Mobiliteitsmaatregel"
     });
-    this.set('articleNodes', articleNodes);
+    this.set('mobiliteitsmaatregelNodes', mobiliteitsmaatregelNodes);
   },
 
   /**
@@ -110,8 +110,8 @@ export default Component.extend({
     const innerArtikelHtml = `
         <span property="eli:number">Artikel ${newArticleNumber}</span>
         <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
-        <div property="prov:value">
-          <div property="ext:roadsign" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
+        <div property="mobiliteit:Artikel.heeftMobiliteitsmaatregel" typeof="mobiliteit:Mobiliteitsmaatregel">
+          <div property="mobiliteit:wordtAangeduidDoor" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
             <div class="grid grid--collapse">
               <div class="col--3-12">
                 <span property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
@@ -159,6 +159,9 @@ export default Component.extend({
 
         const innerHTML = this.generateArticleHtml(roadsignWithConcept, newArticleNumber);
 
+        this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
+        this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
+
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
         this.editor.update(decision, {
           append: {
@@ -176,6 +179,9 @@ export default Component.extend({
 
         const innerHTML = this.generateArticleHtml(roadsignWithConcept, newArticleNumber);
 
+        this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
+        this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
+
         const uri = `http://data.lblod.info/id/artikels/${v4()}`;
         this.editor.update(lastArticle, {
           after: {
@@ -186,9 +192,6 @@ export default Component.extend({
           }
         });
       }
-
-      this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
-      this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
     },
 
     addToArticle(roadsignWithConcept) {
@@ -212,17 +215,17 @@ export default Component.extend({
           </div>
         </div>`;
 
-      this.editor.update(this.articleNodes, {
+      this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
+      this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
+
+      this.editor.update(this.mobiliteitsmaatregelNodes, {
         append: {
           resource: roadsign.uri,
-          typeof: "mobiliteit:Verkeersteken",
-          property: "ext:roadsign",
+          typeof: ["mobiliteit:Verkeersteken", "mobiliteit:Verkeersbord-Verkeersteken"],
+          property: "mobiliteit:wordtAangeduidDoor",
           innerHTML: roadsignHtml
         }
       });
-
-      this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
-      this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
     }
   }
 });

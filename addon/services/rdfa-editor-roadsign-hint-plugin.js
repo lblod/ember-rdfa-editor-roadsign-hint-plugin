@@ -81,7 +81,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
       if(newRoadSigns.length === 0) {
         hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.get('who'));
-        hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.get('whoFromArticle'));
         continue;
       }
 
@@ -89,29 +88,40 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       this.set('roadsignsWithConcepts', yield all(createRoadsignWithConceptTasks));
 
       if (aanvullendReglementNode) {
-        const articlesInRdfaBlocks = this.getUniqueArticles(rdfaBlocks);
+        const articlesContainingRoadsigns = this.getUniqueArticles(rdfaBlocks);
+        const articlesContainingMaps = this.getMapArticles(rdfaBlocks);
 
-        if(Object.keys(articlesInRdfaBlocks).length) {
-          for (let article of Object.keys(articlesInRdfaBlocks)) {
-            const descendentBlockOfArticle = articlesInRdfaBlocks[article][0];
+        if(Object.keys(articlesContainingRoadsigns).length) {
+          for (let article of Object.keys(articlesContainingRoadsigns)) {
+            const descendentBlockOfArticle = articlesContainingRoadsigns[article][0];
             const articleNode = this.getArticleNode(article, descendentBlockOfArticle);
-            const specificHint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode);
-            const specificCard = this.generateCardFromArticle(hrId, hintsRegistry, editor, specificHint);
+            const specificHint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode, true);
+            const specificCard = this.generateCard(hrId, hintsRegistry, editor, specificHint);
             specificCards.push(specificCard);
           }
         } else {
-          const hint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts);
-          const card = this.generateCard(hrId, hintsRegistry, editor, hint);
-          cards.push(card);
+          for (let article of Object.keys(articlesContainingMaps)) {
+            const descendentBlockOfArticle = articlesContainingMaps[article][0];
+            const articleNode = this.getArticleNode(article, descendentBlockOfArticle);
+            const hint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode, false);
+            const card = this.generateCard(hrId, hintsRegistry, editor, hint);
+            cards.push(card);
+          }
         }
       }
     }
 
     if (cards.length > 0) {
+      cards.forEach( card => {
+        hintsRegistry.removeHintsInRegion(card.location, hrId, this.get('who'));
+      });
       hintsRegistry.addHints(hrId, this.get('who'), cards);
     }
     if (specificCards.length > 0) {
-      hintsRegistry.addHints(hrId, this.get('whoFromArticle'), specificCards);
+      specificCards.forEach( card => {
+        hintsRegistry.removeHintsInRegion(card.location, hrId, this.get('who'));
+      });
+      hintsRegistry.addHints(hrId, this.get('who'), specificCards);
     }
   }),
 
@@ -119,13 +129,14 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
   /**
    * Create a hint for a decision or an article
   */
-  createHint(aanvullendReglement, aanvullendReglementNode, roadsignsWithConcepts, nodeWithRegion=null) {
+  createHint(aanvullendReglement, aanvullendReglementNode, roadsignsWithConcepts, nodeWithRegion, isMobiliteitsmaatregel) {
     return EmberObject.create({
       text: aanvullendReglementNode.text || '',
-      location: nodeWithRegion ? nodeWithRegion.region : aanvullendReglementNode.region,
+      location: nodeWithRegion.region,
       context: aanvullendReglementNode,
       resource: aanvullendReglement,
-      roadsignsWithConcepts: roadsignsWithConcepts
+      roadsignsWithConcepts: roadsignsWithConcepts,
+      isMobiliteitsmaatregel: isMobiliteitsmaatregel
     });
   },
 
@@ -156,8 +167,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
 
     const isArticleNode = function (richNode) {
       const rdfaAttributes = richNode.rdfaAttributes || {};
-      return rdfaAttributes.resource == articleUri
-        && rdfaAttributes.typeof.includes("http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel");
+      return rdfaAttributes.resource == articleUri;
     };
 
     while (currentNode && !isArticleNode(currentNode)) {
@@ -210,7 +220,24 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     let articles = {};
     rdfaBlocks.forEach(rdfaBlock => {
       rdfaBlock.context.forEach(triple => {
-        if (triple.object.includes('http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel') && triple.object) {
+        if (triple.object.includes('http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel')) {
+          const articleUri = triple.subject;
+          if (articles[articleUri]) {
+            articles[articleUri].push(rdfaBlock);
+          } else {
+            articles[articleUri] = [ rdfaBlock ];
+          }
+        }
+      });
+    });
+    return articles;
+  },
+
+  getMapArticles(rdfaBlocks) {
+    let articles = {};
+    rdfaBlocks.forEach(rdfaBlock => {
+      rdfaBlock.context.forEach(triple => {
+        if (triple.predicate.includes('http://mu.semte.ch/vocabularies/ext/verkeersbordenVlaanderenSnippet')) {
           const articleUri = triple.subject;
           if (articles[articleUri]) {
             articles[articleUri].push(rdfaBlock);
@@ -274,7 +301,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    * @private
    */
   detectRoadsignsInDecision(besluitTriples) {
-    const roadsignTriples = (besluitTriples.filter(t => t.predicate === `${mobiliteit}wordtAangeduidDoor` || t.predicate === `${ext}roadsign`));
+    const roadsignTriples = (besluitTriples.filter(t => t.predicate === `${mobiliteit}wordtAangeduidDoor`));
     const roadsigns = roadsignTriples.map(roadsignTriple => EmberObject.create({
       uri: roadsignTriple.object
     }));
@@ -321,7 +348,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
    *
    * @private
    */
-  generateCard(hrId, hintsRegistry, editor, hint){
+  generateCard(hrId, hintsRegistry, editor, hint) {
     return EmberObject.create({
       info: {
         label: this.get('who'),
@@ -329,6 +356,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
         plainValue: hint.text,
         location: hint.location,
         besluitUri: hint.resource,
+        isMobiliteitsmaatregel: hint.isMobiliteitsmaatregel,
         hrId,
         hintsRegistry,
         editor
@@ -336,43 +364,11 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       location: hint.location,
       card: this.get('who')
     });
-  },
-
-  /**
-   * Generates a card given a hint
-   *
-   * @method generateCardFromArticle
-   *
-   * @param {string} hrId Unique identifier of the event in the hintsRegistry
-   * @param {Object} hintsRegistry Registry of hints in the editor
-   * @param {Object} editor The RDFa editor instance
-   * @param {Object} hint containing the hinted string and the location of this string
-   *
-   * @return {Object} The card to hint for a given template
-   *
-   * @private
-   */
-  generateCardFromArticle(hrId, hintsRegistry, editor, hint) {
-    return EmberObject.create({
-      info: {
-        label: this.get('whoFromArticle'),
-        roadsignsWithConcepts: hint.roadsignsWithConcepts,
-        plainValue: hint.text,
-        location: hint.location,
-        besluitUri: hint.resource,
-        hrId,
-        hintsRegistry,
-        editor
-      },
-      location: hint.location,
-      card: this.get('whoFromArticle')
-    });
   }
 });
 
 RdfaEditorRoadsignHintPlugin.reopen({
-  who: 'editor-plugins/roadsign-hint-card',
-  whoFromArticle: 'editor-plugins/roadsign-hint-card-from-article'
+  who: 'editor-plugins/roadsign-hint-card'
 });
 
 export default RdfaEditorRoadsignHintPlugin;

@@ -12,7 +12,7 @@
             {{roadsignWithConcept.roadsign.address}}
             {{#wu-button-group}}
               {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsignWithConcept) class="button--narrow button--small u-spacer--bottom--tinier"}}
-              {{#if isHintFromArticle}}
+              {{#if info.isMobiliteitsmaatregel}}
                 {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsignWithConcept) class="button--narrow button--alt button--small u-spacer--bottom--tinier"}}
               {{/if}}
             {{/wu-button-group}}
