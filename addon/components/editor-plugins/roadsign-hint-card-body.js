@@ -134,12 +134,7 @@ export default Component.extend({
 
   actions: {
     insert(roadsignWithConcept) {
-      // Trick to enable the decision hint to grow when articles are added to it
-      const [start, end] = this.location;
-      const updatedLocation = this.hintsRegistry.updateLocationToCurrentIndex(this.hrId, [start, end + 1]);
-
       const triples = this.editor.triplesDefinedInResource(this.info.besluitUri);
-
       const articles = triples.filter((triple) => {
         return triple.predicate == "http://data.europa.eu/eli/ontology#has_part";
       }).map((triple) => triple.object);
@@ -149,15 +144,14 @@ export default Component.extend({
       });
       const sortedArticles = articlesNumberTriples.sortBy("object");
 
-      const newArticleNumber = articles.length + 1;
-
-      const lastArticle = this.editor.selectContext(updatedLocation, {
+      const updatedDecisionLocation = this.hintsRegistry.updateLocationToCurrentIndex(this.hrId, this.info.decisionLocation);
+      const lastArticle = this.editor.selectContext(updatedDecisionLocation, {
         scope: 'auto',
         resource: sortedArticles.get('lastObject').subject
       });
 
+      const newArticleNumber = articles.length + 1;
       const innerHTML = this.generateArticleHtml(roadsignWithConcept, newArticleNumber);
-
       this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
       this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
 

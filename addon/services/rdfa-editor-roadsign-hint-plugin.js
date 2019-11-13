@@ -79,7 +79,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       const aanvullendReglementNode = this.getAanvullendReglementNode(aanvullendReglement, descendentBlockOfAanvullendReglement);
 
       if(newRoadSigns.length === 0) {
-        hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.get('who'));
+        hintsRegistry.removeHintsInRegion(aanvullendReglementNode.region, hrId, this.who);
         continue;
       }
 
@@ -111,9 +111,9 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     }
     if (cards.length > 0) {
       cards.forEach( card => {
-        hintsRegistry.removeHintsInRegion(card.location, hrId, this.get('who'));
+        hintsRegistry.removeHintsInRegion(card.location, hrId, this.who);
       });
-      hintsRegistry.addHints(hrId, this.get('who'), cards);
+      hintsRegistry.addHints(hrId, this.who, cards);
     }
   }),
 
@@ -129,6 +129,39 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       resource: aanvullendReglement,
       roadsignsWithConcepts: roadsignsWithConcepts,
       isMobiliteitsmaatregel: isMobiliteitsmaatregel
+    });
+  },
+
+  /**
+   * Generates a card given a hint
+   *
+   * @method generateCard
+   *
+   * @param {string} hrId Unique identifier of the event in the hintsRegistry
+   * @param {Object} hintsRegistry Registry of hints in the editor
+   * @param {Object} editor The RDFa editor instance
+   * @param {Object} hint containing the hinted string and the location of this string
+   *
+   * @return {Object} The card to hint for a given template
+   *
+   * @private
+   */
+  generateCard(hrId, hintsRegistry, editor, hint) {
+    return EmberObject.create({
+      info: {
+        label: this.who,
+        roadsignsWithConcepts: hint.roadsignsWithConcepts,
+        plainValue: hint.text,
+        location: hint.location,
+        decisionLocation: hint.context.region,
+        besluitUri: hint.resource,
+        isMobiliteitsmaatregel: hint.isMobiliteitsmaatregel,
+        hrId,
+        hintsRegistry,
+        editor
+      },
+      location: hint.location,
+      card: this.who
     });
   },
 
@@ -324,38 +357,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       });
     });
     return difference;
-  },
-
-  /**
-   * Generates a card given a hint
-   *
-   * @method generateCard
-   *
-   * @param {string} hrId Unique identifier of the event in the hintsRegistry
-   * @param {Object} hintsRegistry Registry of hints in the editor
-   * @param {Object} editor The RDFa editor instance
-   * @param {Object} hint containing the hinted string and the location of this string
-   *
-   * @return {Object} The card to hint for a given template
-   *
-   * @private
-   */
-  generateCard(hrId, hintsRegistry, editor, hint) {
-    return EmberObject.create({
-      info: {
-        label: this.get('who'),
-        roadsignsWithConcepts: hint.roadsignsWithConcepts,
-        plainValue: hint.text,
-        location: hint.location,
-        besluitUri: hint.resource,
-        isMobiliteitsmaatregel: hint.isMobiliteitsmaatregel,
-        hrId,
-        hintsRegistry,
-        editor
-      },
-      location: hint.location,
-      card: this.get('who')
-    });
   }
 });
 
