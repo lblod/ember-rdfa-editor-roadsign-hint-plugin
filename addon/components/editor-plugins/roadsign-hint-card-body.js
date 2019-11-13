@@ -151,47 +151,25 @@ export default Component.extend({
 
       const newArticleNumber = articles.length + 1;
 
-      if (newArticleNumber == 1) {
-        const decision = this.editor.selectContext(updatedLocation, {
-          scope: 'auto',
-          resource: this.info.besluitUri
-        });
+      const lastArticle = this.editor.selectContext(updatedLocation, {
+        scope: 'auto',
+        resource: sortedArticles.get('lastObject').subject
+      });
 
-        const innerHTML = this.generateArticleHtml(roadsignWithConcept, newArticleNumber);
+      const innerHTML = this.generateArticleHtml(roadsignWithConcept, newArticleNumber);
 
-        this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
-        this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
+      this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
+      this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
 
-        const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        this.editor.update(decision, {
-          append: {
-            resource: uri,
-            typeof: ["http://data.vlaanderen.be/ns/besluit#Artikel", "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"],
-            property: "eli:has_part",
-            innerHTML
-          }
-        });
-      } else {
-        const lastArticle = this.editor.selectContext(updatedLocation, {
-          scope: 'auto',
-          resource: sortedArticles.get('lastObject').subject
-        });
-
-        const innerHTML = this.generateArticleHtml(roadsignWithConcept, newArticleNumber);
-
-        this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
-        this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
-
-        const uri = `http://data.lblod.info/id/artikels/${v4()}`;
-        this.editor.update(lastArticle, {
-          after: {
-            resource: uri,
-            typeof: ["http://data.vlaanderen.be/ns/besluit#Artikel", "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"],
-            property: "eli:has_part",
-            innerHTML
-          }
-        });
-      }
+      const uri = `http://data.lblod.info/id/artikels/${v4()}`;
+      this.editor.update(lastArticle, {
+        after: {
+          resource: uri,
+          typeof: ["http://data.vlaanderen.be/ns/besluit#Artikel", "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"],
+          property: "eli:has_part",
+          innerHTML
+        }
+      });
     },
 
     addToArticle(roadsignWithConcept) {

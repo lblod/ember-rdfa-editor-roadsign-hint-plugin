@@ -71,7 +71,6 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
     const uniqueAanvullendReglementen = this.getUniqueAanvullendReglementen(rdfaBlocks);
 
     let cards = [];
-    let specificCards = [];
 
     for (let aanvullendReglement of Object.keys(uniqueAanvullendReglementen)) {
       const newRoadSigns = this.findUnreferencedRoadsigns(editor, aanvullendReglement);
@@ -90,38 +89,31 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       if (aanvullendReglementNode) {
         const articlesContainingRoadsigns = this.getUniqueArticles(rdfaBlocks);
         const articlesContainingMaps = this.getMapArticles(rdfaBlocks);
+        const articlesContainingRoadsignsAndMaps = [articlesContainingMaps, articlesContainingRoadsigns];
 
-        if(Object.keys(articlesContainingRoadsigns).length) {
-          for (let article of Object.keys(articlesContainingRoadsigns)) {
-            const descendentBlockOfArticle = articlesContainingRoadsigns[article][0];
-            const articleNode = this.getArticleNode(article, descendentBlockOfArticle);
-            const specificHint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode, true);
-            const specificCard = this.generateCard(hrId, hintsRegistry, editor, specificHint);
-            specificCards.push(specificCard);
+        articlesContainingRoadsignsAndMaps.forEach( articleContainingRoadsignOrMap => {
+          if(Object.keys(articleContainingRoadsignOrMap).length) {
+            for (let article of Object.keys(articleContainingRoadsignOrMap)) {
+              const descendentBlockOfArticle = articleContainingRoadsignOrMap[article][0];
+              const articleNode = this.getArticleNode(article, descendentBlockOfArticle);
+              let hint = null;
+              if (articleNode.rdfaAttributes.typeof.includes("http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel")) {
+                hint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode, true);
+              } else {
+                hint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode, false);
+              }
+              const card = this.generateCard(hrId, hintsRegistry, editor, hint);
+              cards.push(card);
+            }
           }
-        } else {
-          for (let article of Object.keys(articlesContainingMaps)) {
-            const descendentBlockOfArticle = articlesContainingMaps[article][0];
-            const articleNode = this.getArticleNode(article, descendentBlockOfArticle);
-            const hint = this.createHint(aanvullendReglement, aanvullendReglementNode, this.roadsignsWithConcepts, articleNode, false);
-            const card = this.generateCard(hrId, hintsRegistry, editor, hint);
-            cards.push(card);
-          }
-        }
+        })
       }
     }
-
     if (cards.length > 0) {
       cards.forEach( card => {
         hintsRegistry.removeHintsInRegion(card.location, hrId, this.get('who'));
       });
       hintsRegistry.addHints(hrId, this.get('who'), cards);
-    }
-    if (specificCards.length > 0) {
-      specificCards.forEach( card => {
-        hintsRegistry.removeHintsInRegion(card.location, hrId, this.get('who'));
-      });
-      hintsRegistry.addHints(hrId, this.get('who'), specificCards);
     }
   }),
 
