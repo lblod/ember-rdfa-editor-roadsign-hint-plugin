@@ -1,24 +1,31 @@
 <div class="modal-dialog__content modal-dialog__content--sectioned">
-  <ul class="link-list link-list--bordered">
-    {{#each roadsignsWithConcepts as |roadsignWithConcept|}}
-      <li class="link-list__item u-padding--round--tiny">
-        <div class="grid">
-          <div class="col--3-12">
-            <div>
-              {{editor-plugins/roadsign-image roadsignConcept=roadsignWithConcept.roadsignConcept}}
+  {{#if isLoading}}
+    <div class="u-padding--round">
+      <p class="loader"><span class="u-visually-hidden">Aan het laden</span></p>
+    </div>
+  {{else}}
+    <ul class="link-list link-list--bordered">
+
+      {{#each roadsignsWithConcepts as |roadsignWithConcept|}}
+        <li class="link-list__item u-padding--round--tiny">
+          <div class="grid">
+            <div class="col--3-12">
+              <div>
+                {{editor-plugins/roadsign-image roadsignConcept=roadsignWithConcept.roadsignConcept}}
+              </div>
+            </div>
+            <div class="col--9-12">
+              {{roadsignWithConcept.roadsign.address}}
+              {{#wu-button-group}}
+                {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsignWithConcept) class="button--narrow button--small u-spacer--bottom--tinier"}}
+                {{#if info.isMobiliteitsmaatregel}}
+                  {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsignWithConcept) class="button--narrow button--alt button--small u-spacer--bottom--tinier"}}
+                {{/if}}
+              {{/wu-button-group}}
             </div>
           </div>
-          <div class="col--9-12">
-            {{roadsignWithConcept.roadsign.address}}
-            {{#wu-button-group}}
-              {{wu-button label="Maak nieuw artikel" onClick=(action "insert" roadsignWithConcept) class="button--narrow button--small u-spacer--bottom--tinier"}}
-              {{#if info.isMobiliteitsmaatregel}}
-                {{wu-button label="Voeg toe aan huidig artikel" onClick=(action "addToArticle" roadsignWithConcept) class="button--narrow button--alt button--small u-spacer--bottom--tinier"}}
-              {{/if}}
-            {{/wu-button-group}}
-          </div>
-        </div>
-      </li>
-    {{/each}}
-  </ul>
+        </li>
+      {{/each}}
+    </ul>
+    {{/if}}
 </div>

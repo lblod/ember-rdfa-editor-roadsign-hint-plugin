@@ -1,9 +1,9 @@
-import { reads } from '@ember/object/computed';
+import { reads, alias } from '@ember/object/computed';
 import Component from '@ember/component';
 import layout from '../../templates/components/editor-plugins/roadsign-hint-card-body';
 import { inject as service } from '@ember/service';
 import { v4 } from "ember-uuid";
-
+import { task } from 'ember-concurrency';
 /**
 * Card displaying a hint of the Date plugin
 *
@@ -50,9 +50,14 @@ export default Component.extend({
   */
   hintsRegistry: reads('info.hintsRegistry'),
 
+  isLoading: alias('fetchRoadsigns.isRunning'),
+
+  fetchRoadsigns: task(function * () {
+    const roadsignsWithConcepts = yield this.roadsignsState.getRoadsignsWithConcepts(this.info.besluitUri);
+    this.roadsignsWithConcepts = yield this.addAddressToRoadsigns(roadsignsWithConcepts);
+  }),
   async didReceiveAttrs() {
-    const roadsignsWithConcepts = this.roadsignsState.getRoadsignsWithConcepts(this.info.besluitUri);
-    this.set('roadsignsWithConcepts', await this.addAddressToRoadsigns(roadsignsWithConcepts))
+    this.fetchRoadsigns.perform();
 
     // Trick to enable the decision hint to grow when articles are added to it
     const [start, end] = this.location;

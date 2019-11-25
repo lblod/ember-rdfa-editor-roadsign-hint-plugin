@@ -84,7 +84,7 @@ const RdfaEditorRoadsignHintPlugin = Service.extend({
       }
 
       const createRoadsignWithConceptTasks = newRoadSigns.map(newRoadSign => this.get('createRoadsignWithConcept').perform(newRoadSign));
-      this.set('roadsignsWithConcepts', yield all(createRoadsignWithConceptTasks));
+      this.set('roadsignsWithConcepts', all(createRoadsignWithConceptTasks));
 
       if (aanvullendReglementNode) {
         const articlesContainingRoadsigns = this.getUniqueArticles(rdfaBlocks);
