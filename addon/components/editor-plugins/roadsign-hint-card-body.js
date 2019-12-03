@@ -58,18 +58,17 @@ export default Component.extend({
   }),
   async didReceiveAttrs() {
     this.fetchRoadsigns.perform();
+  },
 
+  selectMobiliteitsMaatregelNodes() {
     // Trick to enable the decision hint to grow when articles are added to it
-    const [start, end] = this.location;
-    const updatedLocation = this.hintsRegistry.updateLocationToCurrentIndex(this.hrId, [start, end + 1]);
+    const updatedLocation = this.hintsRegistry.updateLocationToCurrentIndex(this.hrId, this.location);
 
-    const mobiliteitsmaatregelNodes = this.editor.selectContext(updatedLocation, {
+    return this.editor.selectContext(updatedLocation, {
       scope: "auto",
       typeof: "https://data.vlaanderen.be/ns/mobiliteit#Mobiliteitsmaatregel"
     });
-    this.set('mobiliteitsmaatregelNodes', mobiliteitsmaatregelNodes);
   },
-
   /**
    * Add human readable addresses to the roadsign list
    *
@@ -195,7 +194,7 @@ export default Component.extend({
       this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
       this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
 
-      this.editor.update(this.mobiliteitsmaatregelNodes, {
+      this.editor.update(this.selectMobiliteitsMaatregelNodes(), {
         append: {
           resource: roadsign.uri,
           typeof: ["mobiliteit:Verkeersteken", "mobiliteit:Verkeersbord-Verkeersteken"],
