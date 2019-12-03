@@ -193,6 +193,7 @@ export default Component.extend({
 
       this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
       this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
+      this.hintsRegistry.removeHintsAtLocation(this.location,this.hrId, this.who);
 
       this.editor.update(this.selectMobiliteitsMaatregelNodes(), {
         append: {
