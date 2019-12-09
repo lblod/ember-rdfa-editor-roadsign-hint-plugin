@@ -112,27 +112,23 @@ export default Component.extend({
     const definition = concept ? concept.betekenis : "";
 
     const innerArtikelHtml = `
-        <span property="eli:number">Artikel ${newArticleNumber}</span>
-        <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
-        <div property="mobiliteit:Artikel.heeftMobiliteitsmaatregel" typeof="mobiliteit:Mobiliteitsmaatregel">
-          <div property="mobiliteit:wordtAangeduidDoor" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
-            <div class="grid grid--collapse">
-              <div class="col--3-12">
-                <span property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
-                  <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
-                </span>
-              </div>
-              <div class="col--9-12">
-              <p property="dc:description">
-                ${definition}
-              </p>
-              <p>Ter hoogte van ${roadsign.address}.</p>
-              <span property="mobiliteit:isBeginZone" content="${roadsign.isBeginZone || false}" datatype="xsd:boolean"></span>
-              <span property="mobiliteit:isEindeZone" content="${roadsign.isEindeZone || false}" datatype="xsd:boolean"></span>
-              </div>
-            </div>
+      <span property="eli:number">Artikel ${newArticleNumber}</span>
+      <meta property="eli:language" resource="http://publications.europa.eu/resource/authority/language/NLD">
+      <div property="mobiliteit:Artikel.heeftMobiliteitsmaatregel" typeof="mobiliteit:Mobiliteitsmaatregel">
+        <div property="mobiliteit:wordtAangeduidDoor" resource="${roadsign.uri}" typeof="mobiliteit:Verkeersteken mobiliteit:Verkeersbord-Verkeersteken">
+          <p property="dc:description">
+            <strong>${definition}</strong>
+          </p>
+          <div property="mobiliteit:heeftVerkeersbordconcept" resource="${roadsign.roadsignConcept}" typeof="mobiliteit:Verkeersbordconcept">
+            <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
           </div>
-        </div>`;
+          <p>
+          	Ter hoogte van ${roadsign.address}.
+            <span property="mobiliteit:isBeginZone" content="${roadsign.isBeginZone || false}" datatype="xsd:boolean"></span>
+            <span property="mobiliteit:isEindeZone" content="${roadsign.isEindeZone || false}" datatype="xsd:boolean"></span>
+          </p>
+        </div>
+      </div>`;
     return innerArtikelHtml;
   },
 
@@ -165,6 +161,7 @@ export default Component.extend({
           resource: uri,
           typeof: ["http://data.vlaanderen.be/ns/besluit#Artikel", "http://mu.semte.ch/vocabularies/ext/MobiliteitsmaatregelArtikel"],
           property: "eli:has_part",
+          tag: "li",
           innerHTML
         }
       });
@@ -176,20 +173,14 @@ export default Component.extend({
       const definition = concept ? concept.betekenis : "";
 
       const roadsignHtml = `
-        <br>
-        <div class="grid grid--collapse">
-          <div class="col--3-12">
-            <span property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
-              <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
-            </span>
-          </div>
-          <div class="col--9-12">
-            <p property="dc:description">
-              ${definition}
-            </p>
-            <p>Ter hoogte van ${roadsign.address}.</p>
-          </div>
-        </div>`;
+			  <br>
+        <div property="mobiliteit:heeftVerkeersbordconcept" resource=${roadsign.roadsignConcept} typeof="mobiliteit:Verkeersbordconcept">
+          <img src=${concept ? concept.afbeelding : ""} alt="${concept.verkeersbordcode}">
+        </div>
+        <p property="dc:description">
+          <strong>${definition}</strong>
+        </p>
+        <p>Ter hoogte van ${roadsign.address}.</p>`;
 
       this.roadsignsWithConcepts.removeObject(roadsignWithConcept);
       this.roadsignsState.removeRoadsignInCards(roadsignWithConcept.roadsign.uri);
