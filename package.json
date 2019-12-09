@@ -1,6 +1,6 @@
 {
   "name": "@lblod/ember-rdfa-editor-roadsign-hint-plugin",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "The rdfa editor plugin which detects roadsigns and there state of being referenced by articles.",
   "keywords": [
     "ember-addon"
