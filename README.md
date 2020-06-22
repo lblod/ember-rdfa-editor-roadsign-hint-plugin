@@ -1,24 +1,28 @@
-# ember-rdfa-editor-roadsign-hint-plugin
+lblod/ember-rdfa-editor-roadsign-hint-plugin
+==============================================================================
 
 EmberJS addon that inserts roadsigns from a map to the documents, organized in
 articles.
 
 
-## Compatibility
+Compatibility
+------------------------------------------------------------------------------
 
-* Ember.js v3.4 or above
+* Ember.js v3.12 or above
 * Ember CLI v2.13 or above
-* Node.js v8 or above
+* Node.js v10 or above
 
 
-## Installation
+Installation
+------------------------------------------------------------------------------
 
 ```
 ember install @lblod/ember-rdfa-editor-roadsign-hint-plugin
 ```
 
 
-## Usage
+Usage
+------------------------------------------------------------------------------
 
 This plugin parses the informations contained in the map of the decision. It finds the
 roadsigns listed there that are not inserted in the document, and gives an interface
@@ -90,12 +94,13 @@ The inserted articles will have a similar HTML structure:
   </span>
 </li>
 ```
-
-## Contributing
+Contributing
+------------------------------------------------------------------------------
 
 See the [Contributing](CONTRIBUTING.md) guide for details.
 
 
-## License
+License
+------------------------------------------------------------------------------
 
 This project is licensed under the [MIT License](LICENSE.md).

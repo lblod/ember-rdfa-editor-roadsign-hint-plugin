@@ -3,7 +3,7 @@
 ## Installation
 
 * `git clone <repository-url>`
-* `cd ember-rdfa-editor-roadsign-hint-plugin`
+* `cd lblod/ember-rdfa-editor-roadsign-hint-plugin`
 * `npm install`
 
 ## Linting
