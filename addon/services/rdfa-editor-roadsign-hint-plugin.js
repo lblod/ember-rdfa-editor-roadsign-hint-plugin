@@ -1,6 +1,8 @@
 import Service from '@ember/service';
-import normalizeLocation from '../utils/normalize-location';
+// TODO: this import is not exactly pretty
+import {  findUniqueRichNodes } from '@lblod/ember-rdfa-editor/utils/rdfa/rdfa-rich-node-helpers';
 
+const PLUGIN_ID = "editor-plugins/roadsign-hint-card";
 /**
  * Entry point for RoadsignHint
  *
@@ -10,14 +12,13 @@ import normalizeLocation from '../utils/normalize-location';
  * @extends EmberService
  */
 export default class RdfaEditorRoadsignHintPlugin extends Service {
+  editorApi = "0.1"
 
   /**
    * Handles the incoming events from the editor dispatcher.  Responsible for generating hint cards.
    *
    * @method execute
    *
-   * @param {string} hrId Unique identifier of the state in the HintsRegistry.  Allows the
-   * HintsRegistry to update absolute selected regions based on what a user has entered in between.
    * @param {Array} rdfaBlocks Set of logical blobs of content which may have changed.  Each blob is
    * either has a different semantic meaning, or is logically separated (eg: a separate list item).
    * @param {Object} hintsRegistry Keeps track of where hints are positioned in the editor.
@@ -25,30 +26,41 @@ export default class RdfaEditorRoadsignHintPlugin extends Service {
    *
    * @public
    */
-  execute(hrId, rdfaBlocks, hintsRegistry, editor) {
-    const hints = [];
+  execute(rdfaBlocks, hintsRegistry, editor) {
 
-    for( const rdfaBlock of rdfaBlocks ){
-      hintsRegistry.removeHintsInRegion(rdfaBlock.region, hrId, "roadsign-hint-scope");
-
-      let idx = rdfaBlock.text.toLowerCase().indexOf('hello');
-      if( idx !== -1 ) {
-        // the hintsregistry needs to know the location with respect to the document
-        const absoluteLocation = normalizeLocation( [idx, idx + 'hello'.length], rdfaBlock.region );
-
-        hints.push( {
-          // info for the hintsRegistry
-          location: absoluteLocation,
-          card: "editor-plugins/roadsign-hint-card",
-          // any content you need to render the component and handle its actions
-          info: {
-            hrId, hintsRegistry, editor,
-            location: absoluteLocation
-          }
-        });
-      }
+    for(const richNode of findUniqueRichNodes(rdfaBlocks, { typeof: 'http://data.vlaanderen.be/ns/besluit#Besluit'})){
+      hintsRegistry.removeHints({region: richNode.region, scope: PLUGIN_ID});
     }
 
-    hintsRegistry.addHints(hrId, "roadsign-hint-scope", hints);
+    let besluitRichNodes = [];
+    const snippetRicheNodes = findUniqueRichNodes(rdfaBlocks, { property: 'http://mu.semte.ch/vocabularies/ext/verkeersbordenVlaanderenSnippet' });
+
+    for (const richNode of snippetRicheNodes) {
+      const besluitUri = this.getBesluitFromVerkeersSnippet(richNode.rdfaBlocks);
+      besluitRichNodes = [ ...besluitRichNodes, ...findUniqueRichNodes(rdfaBlocks, { resource: besluitUri })];
+    }
+
+    for (const richNode of besluitRichNodes){
+      const location = richNode.region;
+      hintsRegistry.addHint( PLUGIN_ID, {
+        location,
+        card: PLUGIN_ID,
+        info: {
+          card: PLUGIN_ID,
+          hintsRegistry,
+          editor,
+          location,
+          selectionContext: { resource: richNode.rdfaAttributes.resource }
+        },
+        options: { noHighlight: true }
+      });
+    }
+  }
+
+  getBesluitFromVerkeersSnippet(rdfaBlocks){
+    for(const block of rdfaBlocks){
+        return block.context.find(t => t.object=== 'http://data.vlaanderen.be/ns/besluit#Besluit').subject;
+    }
+    return null;
   }
 }
