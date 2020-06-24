@@ -1,6 +1,6 @@
 import fetch from 'fetch';
 
-const SPARQL_ENDPOINT = 'http://localhost/sparql';
+const SPARQL_ENDPOINT = 'https://centrale-vindplaats.lblod.info/sparql';
 
 class Verkeersbordconcept {
   type = "https://data.vlaanderen.be/ns/mobiliteit#Verkeersbordconcept"
