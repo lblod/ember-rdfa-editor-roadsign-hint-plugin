@@ -27,20 +27,20 @@ export default class RdfaEditorRoadsignHintPlugin extends Service {
    * @public
    */
   execute(rdfaBlocks, hintsRegistry, editor) {
-
-    for(const richNode of findUniqueRichNodes(rdfaBlocks, { typeof: 'http://data.vlaanderen.be/ns/besluit#Besluit'})){
+    const besluitRichNodes = findUniqueRichNodes(rdfaBlocks, { typeof: 'http://data.vlaanderen.be/ns/besluit#Besluit'});
+    for(const richNode of besluitRichNodes ){
       hintsRegistry.removeHints({region: richNode.region, scope: PLUGIN_ID});
     }
 
-    let besluitRichNodes = [];
+    let filteredBesluitRichNodes = [];
     const snippetRicheNodes = findUniqueRichNodes(rdfaBlocks, { property: 'http://mu.semte.ch/vocabularies/ext/verkeersbordenVlaanderenSnippet' });
 
     for (const richNode of snippetRicheNodes) {
       const besluitUri = this.getBesluitFromVerkeersSnippet(richNode.rdfaBlocks);
-      besluitRichNodes = [ ...besluitRichNodes, ...findUniqueRichNodes(rdfaBlocks, { resource: besluitUri })];
+      filteredBesluitRichNodes = [ ...filteredBesluitRichNodes, ...besluitRichNodes.filter(n => n.rdfaAttributes.resource === besluitUri)];
     }
 
-    for (const richNode of besluitRichNodes){
+    for (const richNode of filteredBesluitRichNodes){
       const location = richNode.region;
       hintsRegistry.addHint( PLUGIN_ID, {
         location,
