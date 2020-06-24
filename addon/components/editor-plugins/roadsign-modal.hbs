@@ -4,7 +4,7 @@
     <div class="say-modal__header">
       <div>
         <h1 class="say-modal__title" tabindex="-1">
-          Beheer maatregelen in besluit
+          Beheer maatregelen
         </h1>
       </div>
       <button type="button" {{on "click" @closeModal}} class="say-modal__close">
@@ -16,41 +16,73 @@
         </svg>
       </button>
     </div>
-    <div class="say-modal__content">
+    {{#if this.selectedDecision}}
 
-      {{#if this.selectedVerkeersbordconcept}}
-        <EditorPlugins::RoadsignMaatregelconceptcombinatiesOverview
-            @verkeersbordconcept={{this.selectedVerkeersbordconcept}}
-        />
-      {{else}}
-        <h1>Overzicht gevonden verkeersbordconcepten in bijlage van dit besluit</h1>
-        {{#if this.search.isRunning}}
-          <div class="say-modal__info">
-            <p class="say-loader"><span class="say-u-hidden-visually">Aan het laden...</span></p>
-          </div>
-        {{else}}
-          <table>
-            <tr>
-              <th>Afbeelding</th>
-              <th>Naam</th>
-              <th>Definitie</th>
-              <th>Actie</th>
-            </tr>
-              {{#each this.verkeersbordConcepten as | verkeersbordconcept |}}
+    {{else}}
+      <div class="say-modal__body">
+        <div class="say-modal__sidebar">
+          <h1>Gevonden borden in de bijlage</h1>
+          {{#each this.verkeersbordConcepten as | verkeersbordconcept |}}
+            <div style="width: 100%; float:left; margin-top: 15px">
+              <div style="width:100%; float:left"> <img src="{{verkeersbordconcept.grafischeWeergave}}"/> </div>
+               Naam: {{verkeersbordconcept.prefLabel}} <br>
+               Definitie: {{verkeersbordconcept.defintion}}<br>
+            </div>
+          {{/each}}
+        </div>
+        <div class="say-modal__content">
+          {{#if this.search.isRunning}}
+            <div class="say-modal__info">
+              <p class="say-loader"><span class="say-u-hidden-visually">Aan het laden...</span></p>
+            </div>
+          {{else}}
+            {{#if this.maatregelCombos.length}}
+              <table>
                 <tr>
-                  <td><img src="{{verkeersbordconcept.grafischeWeergave}}"/></td>
-                  <td>{{verkeersbordconcept.prefLabel}}</td>
-                  <td>{{verkeersbordconcept.defintion}}</td>
-                  <td>
-                    <AuButton {{on "click" (fn this.openMaatregelconceptcombinatieOverview verkeersbordconcept) }}>
-                      Bekijk mogelijke maatregelen
-                    </AuButton>
-                  </td>
+                  <th>Maatregelcombinaties</th>
                 </tr>
-              {{/each}}
-          </table>
-        {{/if}}
-      {{/if}}
+                  {{#each this.maatregelCombos as | combo |}}
+                    <tr>
+                      <td>
+                        <ul class="say-link-list say-link-list--large">
+                          {{#each combo.maatregelen as | maatregel |}}
+                            <li class="say-link-list__item say-link-list__item--insert">
+                              {{maatregel.description}}
+                              <img src="{{maatregel.verkeersbord.grafischeWeergave}}" />
+                              <WuCheckbox @checked={{maatregel.selected}}/>
+                              <AuLabel id="description-checkbox-differentiatie">
+                                Selecteer maateregel om in artikel te voegen.
+                              </AuLabel>
+                            </li>
+                          {{/each}}
+                        </ul>
+                      </td>
+                    </tr>
+                  {{/each}}
+              </table>
+            {{else}}
+              <div class="say-modal__info">
+                <p>Geen maatregelcombinaties gevonden</p>
+              </div>
+            {{/if}}
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+    <div class="say-modal__footer">
+      
+      <AuButton
+         @disabled={{if this.search.isRunning "true" }}
+        {{on "click" (fn this.insertInDocument)}}
+      >
+        Voeg toe aan document.
+      </AuButton>
+
+      <AuButton
+        @skin={{"secondary"}}
+        {{on "click" @closeModal}}>
+        Annuleer
+      </AuButton>
     </div>
   </div>
 </div>
