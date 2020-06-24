@@ -1,0 +1,56 @@
+<div>
+  <span class="say-modal-backdrop is-visible" aria-hidden="true"></span>
+  <div class="say-modal say-modal--fullscreen is-visible" tabindex="-1" role="document">
+    <div class="say-modal__header">
+      <div>
+        <h1 class="say-modal__title" tabindex="-1">
+          Beheer maatregelen in besluit
+        </h1>
+      </div>
+      <button type="button" {{on "click" @closeModal}} class="say-modal__close">
+        Venster sluiten
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="say-icon say-icon--right say-icon--large">
+          <g class="cross">
+            <path fill-rule="evenodd" d="M12 13.414l-5.293 5.293-1.414-1.414L10.586 12 5.293 6.707l1.414-1.414L12 10.586l5.293-5.293 1.414 1.414L13.414 12l5.293 5.293-1.414 1.414L12 13.414z" class="Vector" clip-rule="evenodd"/>
+          </g>
+        </svg>
+      </button>
+    </div>
+    <div class="say-modal__content">
+
+      {{#if this.selectedVerkeersbordconcept}}
+        <EditorPlugins::RoadsignMaatregelconceptcombinatiesOverview
+            @verkeersbordconcept={{this.selectedVerkeersbordconcept}}
+        />
+      {{else}}
+        <h1>Overzicht gevonden verkeersbordconcepten in bijlage van dit besluit</h1>
+        {{#if this.search.isRunning}}
+          <div class="say-modal__info">
+            <p class="say-loader"><span class="say-u-hidden-visually">Aan het laden...</span></p>
+          </div>
+        {{else}}
+          <table>
+            <tr>
+              <th>Afbeelding</th>
+              <th>Naam</th>
+              <th>Definitie</th>
+              <th>Actie</th>
+            </tr>
+              {{#each this.verkeersbordConcepten as | verkeersbordconcept |}}
+                <tr>
+                  <td><img src="{{verkeersbordconcept.grafischeWeergave}}"/></td>
+                  <td>{{verkeersbordconcept.prefLabel}}</td>
+                  <td>{{verkeersbordconcept.defintion}}</td>
+                  <td>
+                    <AuButton {{on "click" (fn this.openMaatregelconceptcombinatieOverview verkeersbordconcept) }}>
+                      Bekijk mogelijke maatregelen
+                    </AuButton>
+                  </td>
+                </tr>
+              {{/each}}
+          </table>
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+</div>

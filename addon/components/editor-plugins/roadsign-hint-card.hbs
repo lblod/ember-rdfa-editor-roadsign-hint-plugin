@@ -1,12 +1,20 @@
 <div class="modal-dialog__content">
   <p class="u-spacer--tiny">
-    Execute roadsign-hint
+    Een bijlage uit mobiliteit vlaanderen werd gedetecteerd.
     <br>
-    <strong>Do you want to execute your action?</strong>
+    <strong>Wenst u deze informatie te beheren?</strong>
   </p>
 </div>
 <div class="modal-dialog__footer">
   <WuButtonGroup>
-    <WuButton @label="Yes" @size="small" @isNarrow={{true}} @commandLocation="below" @onClick={{this.insert}} />
+    <WuButton @label="Beheer" @size="small" @isNarrow={{true}} @commandLocation="below" @onClick={{this.openRoadsignModal}} />
   </WuButtonGroup>
 </div>
+
+
+{{#if this.showModal}}
+  <EditorPlugins::RoadsignModal
+    @closeModal={{this.closeRoadsignModal}}
+    @info={{@info}}
+  />
+{{/if}}

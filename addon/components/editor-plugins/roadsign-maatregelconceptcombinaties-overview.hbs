@@ -1,0 +1,34 @@
+Gevonden Maatregelcombinaties bij het bord
+<img src="{{@verkeersbordconcept.grafischeWeergave}}" style="width:80px"/>
+{{@verkeersbordconcept.prefLabel}}
+
+{{#if this.search.isRunning}}
+  <div class="say-modal__info">
+    <p class="say-loader"><span class="say-u-hidden-visually">Aan het laden...</span></p>
+  </div>
+{{else}}
+  <table>
+    <tr>
+      <th>Maatregelcombinaties</th>
+      <th>Actie</th>
+    </tr>
+      {{#each this.maatregelCombos as | combo |}}
+        <tr>
+          <td>
+            <ul>
+              {{#each combo.maatregelen as | maatregel |}}
+                <li>
+                  {{maatregel.description}}
+                  <img src="{{maatregel.verkeersbord.grafischeWeergave}}" />
+                  <WuCheckbox @checked={{maatregel.selected}}/>
+                  <AuLabel id="description-checkbox-differentiatie">
+                    Selecteer maateregel om in artikel te voegen.
+                  </AuLabel>
+                </li>
+              {{/each}}
+            </ul>
+          </td>
+        </tr>
+      {{/each}}
+  </table>
+{{/if}}
