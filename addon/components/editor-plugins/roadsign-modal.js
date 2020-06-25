@@ -29,7 +29,9 @@ export default class EditorPluginsRoadsignModalComponent extends Component {
 
   async setVerkeersbordconcepten(){
     const selection = this.editor.selectContext(this.location, { resource: this.besluitUri });
-    const vBordConceptUris = triplesInSelection(selection).filter(t => t.predicate === 'https://data.vlaanderen.be/ns/mobiliteit#heeftVerkeersbordconcept');
+    const triples = triplesInSelection(selection);
+    if(!triples.find(t => t.object === 'https://data.vlaanderen.be/ns/mobiliteit#Opstelling')) return;
+    const vBordConceptUris = triples.filter(t => t.predicate === 'https://data.vlaanderen.be/ns/mobiliteit#heeftVerkeersbordconcept');
     const fetchedBordConcepts = [];
     for(const uri of vBordConceptUris){
       fetchedBordConcepts.push(await loadVerkeersbordconcept(uri.object));

@@ -45,7 +45,7 @@ export default class RoadsignHintCard extends Component {
         resource: `http://data.lblod.info/artikels/${v4()}`
       }
     });
-
+    // We want to keep the hint open, so no removal
     this.showModal = false;
   }
 
