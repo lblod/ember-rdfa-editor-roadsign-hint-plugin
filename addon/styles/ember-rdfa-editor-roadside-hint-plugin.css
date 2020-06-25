@@ -1,0 +1,130 @@
+/* Mockup styles */
+/* @TODO: refactor into say-editor */
+
+.say-heading-2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.say-sign {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.say-sign + .say-sign {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dotted #CCD1D9;
+}
+
+.say-sign__image {
+  display: block;
+  width: 5rem;
+  flex-grow: 1;
+}
+
+.say-sign__image img {
+  display: block;
+  width: 5rem;
+}
+
+.say-sign__description {
+  margin-left: 1.5rem;
+  width: calc(100% - 6.5rem);
+}
+
+.say-sign__description-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.say-sign__description-para {
+  font-size: 1.5rem;
+}
+
+.say-sign__description-action {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-top: .5rem;
+}
+
+.say-sign__description-action .checkbox {
+  margin-right: 0rem;
+  top: -.2rem;
+}
+
+.say-sign__description-action input {
+  position: absolute;
+}
+
+.say-sign__description-action .checkbox label {
+  display: none;
+}
+
+.say-sign__description-action .au-c-label {
+  font-weight: 500 !important;
+  margin-bottom: 0;
+}
+
+.say-roadsign-table {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.say-roadsign-table__table {
+  position: relative;
+  flex-grow: 1;
+  overflow: auto;
+  height: 100%;
+}
+
+.say-roadsign-table__table table {
+
+}
+
+.say-roadsign-table__table th,
+.say-roadsign-table__table td {
+  padding: 2rem;
+  border-bottom: 1px solid #E6E8EB;
+}
+
+.say-roadsign-table__table th {
+  font-size: 1.8rem;
+  font-weight: 600;
+  padding-top: 2.5rem;
+  border-bottom: 2px solid #E6E8EB;
+}
+
+.say-roadsign-table__table td {
+  border-bottom: 1px solid #E6E8EB;
+}
+
+.say-roadsign-table__table tr {
+
+}
+
+.say-roadside-table__footer {
+  border-top: 1px solid #E6E8EB;
+  padding: 2rem;
+}
+
+.say-roadsign-list {
+  margin-left: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+
+.say-roadsign-list__item {
+  padding-left: 0;
+}
+
+.say-roadsign-list__item + .say-roadsign-list__item {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dotted #E6E8EB;
+}

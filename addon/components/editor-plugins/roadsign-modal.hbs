@@ -21,12 +21,18 @@
     {{else}}
       <div class="say-modal__body">
         <div class="say-modal__sidebar">
-          <h1>Gevonden borden in de bijlage</h1>
+          <h2 class="say-heading-2">Gevonden borden in de bijlage</h2>
           {{#each this.verkeersbordConcepten as | verkeersbordconcept |}}
-            <div style="width: 100%; float:left; margin-top: 15px">
-              <div style="width:100%; float:left"> <img src="{{verkeersbordconcept.grafischeWeergave}}"/> </div>
-               Naam: {{verkeersbordconcept.prefLabel}} <br>
-               Definitie: {{verkeersbordconcept.defintion}}<br>
+            <div class="say-sign">
+              <div class="say-sign__image">
+                <img src="{{verkeersbordconcept.grafischeWeergave}}"/>
+              </div>
+              <div class="say-sign__description">
+                <h3 class="say-sign__description-title">Naam: {{verkeersbordconcept.prefLabel}} </h3>
+                <p class="say-sign__description-para">
+                  Definitie: {{verkeersbordconcept.defintion}}
+                </p>
+              </div>
             </div>
           {{/each}}
         </div>
@@ -37,29 +43,58 @@
             </div>
           {{else}}
             {{#if this.maatregelCombos.length}}
-              <table>
-                <tr>
-                  <th>Maatregelcombinaties</th>
-                </tr>
-                  {{#each this.maatregelCombos as | combo |}}
+              <div class="say-roadsign-table">
+                <div class="say-roadsign-table__table">
+                  <table>
                     <tr>
-                      <td>
-                        <ul class="say-link-list say-link-list--large">
-                          {{#each combo.maatregelen as | maatregel |}}
-                            <li class="say-link-list__item say-link-list__item--insert">
-                              {{maatregel.description}}
-                              <img src="{{maatregel.verkeersbord.grafischeWeergave}}" />
-                              <WuCheckbox @checked={{maatregel.selected}}/>
-                              <AuLabel id="description-checkbox-differentiatie">
-                                Selecteer maateregel om in artikel te voegen.
-                              </AuLabel>
-                            </li>
-                          {{/each}}
-                        </ul>
-                      </td>
+                      <th>Maatregelcombinaties</th>
                     </tr>
-                  {{/each}}
-              </table>
+                      {{#each this.maatregelCombos as | combo |}}
+                        <tr>
+                          <td>
+                            <ul class="say-roadsign-list">
+                              {{#each combo.maatregelen as | maatregel |}}
+                                <li class="say-roadsign-list__item">
+                                  <div class="say-sign">
+                                    <div class="say-sign__image">
+                                      <img src="{{maatregel.verkeersbord.grafischeWeergave}}" />
+                                    </div>
+                                    <div class="say-sign__description">
+                                      <h3 class="say-sign__description-title">Naam: {{verkeersbordconcept.prefLabel}} </h3>
+                                      <p class="say-sign__description-para">
+                                        {{maatregel.description}}
+                                      </p>
+                                      <p class="say-sign__description-action">
+                                        <WuCheckbox @checked={{maatregel.selected}}/>
+                                        <AuLabel id="description-checkbox-differentiatie">
+                                          Selecteer maatregel om in artikel te voegen.
+                                        </AuLabel>
+                                      </p>
+                                    </div>
+                                  </div>
+                                </li>
+                              {{/each}}
+                            </ul>
+                          </td>
+                        </tr>
+                      {{/each}}
+                  </table>
+                </div>
+                <div class="say-roadside-table__footer">
+                  <AuButton
+                    @disabled={{if this.search.isRunning "true" }}
+                    {{on "click" (fn this.insertInDocument)}}
+                  >
+                    Voeg toe aan document.
+                  </AuButton>
+
+                  <AuButton
+                    @skin={{"secondary"}}
+                    {{on "click" @closeModal}}>
+                    Annuleer
+                  </AuButton>
+                </div>
+              </div>
             {{else}}
               <div class="say-modal__info">
                 <p>Geen maatregelcombinaties gevonden</p>
@@ -69,20 +104,5 @@
         </div>
       </div>
     {{/if}}
-    <div class="say-modal__footer">
-
-      <AuButton
-         @disabled={{if this.search.isRunning "true" }}
-        {{on "click" (fn this.insert)}}
-      >
-        Voeg toe aan document.
-      </AuButton>
-
-      <AuButton
-        @skin={{"secondary"}}
-        {{on "click" @closeModal}}>
-        Annuleer
-      </AuButton>
-    </div>
   </div>
 </div>
