@@ -77,10 +77,11 @@ export default class EditorPluginsRoadsignModalComponent extends Component {
   }
 
   @action
-  insertInDocument(){
+  insert(){
     const maatregelenToInsert  = [];
     for(const combo of this.maatregelCombos){
       maatregelenToInsert.push(...combo.maatregelen.filter(m => m.selected));
     }
+    this.args.onInsert(maatregelenToInsert);
   }
 }

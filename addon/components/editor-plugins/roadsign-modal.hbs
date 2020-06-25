@@ -70,10 +70,10 @@
       </div>
     {{/if}}
     <div class="say-modal__footer">
-      
+
       <AuButton
          @disabled={{if this.search.isRunning "true" }}
-        {{on "click" (fn this.insertInDocument)}}
+        {{on "click" (fn this.insert)}}
       >
         Voeg toe aan document.
       </AuButton>
