@@ -13,6 +13,7 @@ export default class EditorPluginsRoadsignModalComponent extends Component {
   @tracked verkeersbordConcepten = []
   @tracked selectedVerkeersbordconcept
   @tracked maatregelCombos = []
+  @tracked maatregelenToInsert = []
 
   constructor() {
     super(...arguments);
@@ -77,11 +78,17 @@ export default class EditorPluginsRoadsignModalComponent extends Component {
   }
 
   @action
-  insert(){
-    const maatregelenToInsert  = [];
-    for(const combo of this.maatregelCombos){
-      maatregelenToInsert.push(...combo.maatregelen.filter(m => m.selected));
+  updateMaatregelenToInsert(maatregel, event){
+    if(event.target.checked){
+      this.maatregelenToInsert.pushObject(maatregel);
     }
-    this.args.onInsert(maatregelenToInsert);
+    else {
+      this.maatregelenToInsert.removeObject(maatregel);
+    }
+  }
+
+  @action
+  insert(){
+    this.args.onInsert(this.maatregelenToInsert);
   }
 }

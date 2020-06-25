@@ -65,7 +65,7 @@
                                         {{maatregel.description}}
                                       </p>
                                       <p class="say-sign__description-action">
-                                        <WuCheckbox @checked={{maatregel.selected}}/>
+                                        <WuCheckbox @checked={{maatregel.selected}} @onClick={{fn this.updateMaatregelenToInsert maatregel}} />
                                         <AuLabel id="description-checkbox-differentiatie">
                                           Selecteer maatregel om in artikel te voegen.
                                         </AuLabel>
@@ -82,10 +82,14 @@
                 </div>
                 <div class="say-roadside-table__footer">
                   <AuButton
-                    @disabled={{if this.search.isRunning "true" }}
-                    {{on "click" (fn this.insertInDocument)}}
+                    {{on "click" (fn this.insert)}}
+                    @disabled={{if this.maatregelenToInsert.length "false" "true" }}
                   >
+                    {{#if this.maatregelenToInsert.length}}
                     Voeg toe aan document.
+                    {{else}}
+                    Gelieve een maatregel te selecteren.
+                    {{/if}}
                   </AuButton>
 
                   <AuButton
