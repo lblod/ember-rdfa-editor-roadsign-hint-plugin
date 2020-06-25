@@ -33,10 +33,12 @@ export default class RoadsignHintCard extends Component {
 
   @action
   async insertMaatregelenInArtikel( maatregelConcepten ){
-    const selection = this.editor.selectContext(this.location, { resource: this.besluitUri });
+    const selection = this.editor.selectContext(this.location, {
+      typeof: 'http://lblod.data.gift/vocabularies/editor/SnippetAttachment'
+    });
     const rdfa = await this.generateRdfa(selection, maatregelConcepten);
     this.editor.update(selection, {
-      append : {
+      before : {
         innerHTML: rdfa,
         property: 'eli:has_part',
         typeof: 'besluit:Artikel',
