@@ -1,6 +1,6 @@
 import fetch from 'fetch';
 
-const SPARQL_ENDPOINT = 'https://centrale-vindplaats.lblod.info/sparql';
+const SPARQL_ENDPOINT = 'http://localhost/sparql';
 
 class Verkeersbordconcept {
   type = "https://data.vlaanderen.be/ns/mobiliteit#Verkeersbordconcept"
@@ -16,7 +16,7 @@ class Verkeersbordconcept {
 }
 
 class Maatregelconcept {
-  type = "https://data.vlaanderen.be/ns/mobiliteit#Maatregelconcept"
+  type = "http://data.lblod.info/vocabularies/mobiliteit/Maatregelconcept"
 
   constructor({ uri, description, verkeersbordconceptUris, maatregelconceptcombinatieUris }){
     this.uri = uri;
@@ -163,6 +163,112 @@ export async function loadMaatregelconceptCombinatie( uri ){
 
   return maatregelconceptcombinatie;
 }
+
+
+
+export async function loadMaatregelconceptcombinatieTreeFromVerkeersbordconcepten( vekeersbordconceptUris ){
+  //Big bold query to load all data. Previous load procedure was too slow.
+  const filterArray = vekeersbordconceptUris.map(uri => sparqlEscapeUri(uri)).join(', ');
+  const query = `
+     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+     PREFIX mobiliteit: <https://data.vlaanderen.be/ns/mobiliteit#>
+     PREFIX lblodmow: <http://data.lblod.info/vocabularies/mobiliteit/>
+     PREFIX dct: <http://purl.org/dc/terms/>
+
+     SELECT DISTINCT
+            ?vbUri
+            ?vbLabel
+            ?vbNote
+            ?vbDefinition
+            ?vbWeergave
+            ?mUri
+            ?mDescription
+            ?mcUri WHERE {
+
+       GRAPH ?g {
+
+         ?mcUri a lblodmow:Maatregelconceptcombinatie;
+                dct:hasPart ?mUri;
+                dct:hasPart ?mFilterUri.
+
+          ?mUri a lblodmow:Maatregelconcept;
+                dct:description ?mDescription;
+                lblodmow:verkeersbordconcept ?vbUri.
+
+          ?mFilterUri lblodmow:verkeersbordconcept ?vbForFilter.
+
+          ?vbUri a mobiliteit:Verkeersbordconcept;
+                 skos:prefLabel ?vbLabel;
+                 skos:scopeNote ?vbNote;
+                 skos:definition ?vbDefinition;
+                 mobiliteit:grafischeWeergave ?vbWeergave.
+
+       }
+
+       FILTER(?vbForFilter IN (${filterArray}))
+     }
+     ORDER BY ?vbUri
+  `;
+
+  const response = await executeQuery(query);
+
+  if(!response.results.bindings.length){
+    return {};
+  }
+
+  const rows = response.results.bindings;
+
+  const borden = {};
+  const maatregelen = {};
+  const maatregelenCombos = {};
+
+  //first instantiate objects
+  for(const row of rows){
+    borden[row.vbUri.value] = new Verkeersbordconcept(
+      {
+        uri: row.vbUri.value,
+        label: row.vbLabel.value,
+        scopeNote: row.vbNote.value,
+        definition: row.vbDefinition.value,
+        grafischeWeergave: row.vbWeergave.value
+      }
+    );
+
+    maatregelen[row.mUri.value] = new Maatregelconcept(
+      {
+        uri: row.mUri.value,
+        description: row.mDescription.value
+      }
+    );
+
+    maatregelenCombos[row.mcUri.value] = new Maatregelconceptcombinatie({
+      uri: row.mcUri.value
+    });
+  }
+
+  //make sure there are relations
+  for(const row of rows){
+    borden[row.vbUri.value].maatregelconceptUris.push(row.mUri.value);
+    maatregelen[row.mUri.value].verkeersbordconceptUris.push(row.vbUri.value);
+    maatregelen[row.mUri.value].maatregelconceptcombinatieUris.push(row.mcUri.value);
+    maatregelenCombos[row.mcUri.value].maatregelconceptUris.push(row.mUri.value);
+  }
+
+  //relations might met provided duplicate, they can be flattend here
+  Object.values(borden).forEach(b => b.maatregelconceptUris = b.maatregelconceptUris.uniq());
+  Object.values(maatregelen).forEach(m => m.verkeersbordconceptUris = m.verkeersbordconceptUris.uniq());
+  Object.values(maatregelen).forEach(m => m.maatregelconceptcombinatieUris = m.maatregelconceptcombinatieUris.uniq());
+  Object.values(maatregelenCombos).forEach(mc => mc.maatregelconceptUris = mc.maatregelconceptUris.uniq());
+
+
+  return {
+    verkeersbordconcepten: borden,
+    maatregelconcepten: maatregelen,
+    maatregelconceptcombinaties: maatregelenCombos
+  };
+}
+
+
 
 async function executeCountQuery(query) {
   const response = await executeQuery(query);

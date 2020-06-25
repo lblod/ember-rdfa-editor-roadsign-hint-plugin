@@ -1,7 +1,11 @@
 import Component from '@glimmer/component';
 import { task } from 'ember-concurrency-decorators';
 import triplesInSelection from '@lblod/ember-rdfa-editor/utils/triples-in-selection';
-import { loadMaatregelconcept, loadMaatregelconceptCombinatie, loadVerkeersbordconcept } from '../../utils/verkeersborden-db';
+import { loadMaatregelconcept,
+         loadMaatregelconceptCombinatie,
+         loadVerkeersbordconcept,
+         loadMaatregelconceptcombinatieTreeFromVerkeersbordconcepten
+       } from '../../utils/verkeersborden-db';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
 
@@ -34,41 +38,23 @@ export default class EditorPluginsRoadsignModalComponent extends Component {
   }
 
   async loadMaatregelconceptcombinatie( verkeersbordconcepten ){
-    // Rather elaborate procedure to load
-    // All data related to all maatregelconceptcombinatie linked to all encountered verkeersbordconcepten.
-    // This will be improved one day, we have sparql now, but we are in POC mode.
-    // Also check:
-    //https://cloud.vandekeybus.eu/apps/files_sharing/publicpreview/GoG3mrxNR5REWkJ?x=2560&y=1011&a=true&file=irg.png&scalingup=0
+    const data = await loadMaatregelconceptcombinatieTreeFromVerkeersbordconcepten(verkeersbordconcepten.map(v => v.uri));
 
-    const maatregelen = {};
-    const maatregelCombos = {};
+    //Interlink the data so it can be used in the template easily
+    for(const combo of Object.values(data.maatregelconceptcombinaties)){
+      combo.maatregelen = [];
 
-    for(const verkeersbordconcept of verkeersbordconcepten){
-      //First we go from maatregel to combinatie
-      for(const maatregelUri of verkeersbordconcept.maatregelconceptUris){
-        maatregelen[maatregelUri] = await loadMaatregelconcept(maatregelUri);
-      }
+      for(const maatregelUri of combo.maatregelconceptUris){
 
-      for(const maatregel of Object.values(maatregelen) ){
-        for(const maatregelcomboUri of maatregel.maatregelconceptcombinatieUris){
-          maatregelCombos[maatregelcomboUri] = await loadMaatregelconceptCombinatie(maatregelcomboUri);
-        }
-      }
-
-      //Then we want to know all maatregelen belonging to a combo
-      for(const combo of Object.values(maatregelCombos)){
-        combo.maatregelen = [];
-        for(const maatregelUri of combo.maatregelconceptUris){
-          const maatregel = await loadMaatregelconcept(maatregelUri);
-          //TODO: this is an assumption: 1 maatregel 1 bord
-          maatregel.selected = false;
-          maatregel.verkeersbord = await loadVerkeersbordconcept (maatregel.verkeersbordconceptUris[0]);
-          combo.maatregelen.push(maatregel);
-        }
+        const maatregel = data.maatregelconcepten[maatregelUri];
+        //TODO: this is an assumption: 1 maatregel 1 bord
+        maatregel.selected = false;
+        maatregel.verkeersbord = data.verkeersbordconcepten[maatregel.verkeersbordconceptUris[0]];
+        combo.maatregelen.push(maatregel);
       }
     }
 
-    this.maatregelCombos = Object.values(maatregelCombos);
+    this.maatregelCombos = Object.values(data.maatregelconceptcombinaties);
   }
 
   @task
