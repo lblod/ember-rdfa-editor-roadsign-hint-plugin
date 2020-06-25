@@ -27,13 +27,19 @@ export default class RdfaEditorRoadsignHintPlugin extends Service {
    * @public
    */
   execute(rdfaBlocks, hintsRegistry, editor) {
-    const besluitRichNodes = findUniqueRichNodes(rdfaBlocks, { typeof: 'http://data.vlaanderen.be/ns/besluit#Besluit'});
-    for(const richNode of besluitRichNodes ){
-      hintsRegistry.removeHints({region: richNode.region, scope: PLUGIN_ID});
-    }
+    // TODO: removal of hint doesn't work.
+    // Hint is availible on another level (parent) then where the trigger is situated.
+    // If the trigger node is removed, the hint will never be removed.
+    // I guess this is a core issue.
+    hintsRegistry.removeHints({rdfaBlocks, scope: PLUGIN_ID});
 
     let filteredBesluitRichNodes = [];
     const snippetRicheNodes = findUniqueRichNodes(rdfaBlocks, { property: 'http://mu.semte.ch/vocabularies/ext/verkeersbordenVlaanderenSnippet' });
+    let besluitRichNodes = [];
+
+    if( snippetRicheNodes.length ){
+      besluitRichNodes = findUniqueRichNodes(rdfaBlocks, { typeof: 'http://data.vlaanderen.be/ns/besluit#Besluit'});
+    }
 
     for (const richNode of snippetRicheNodes) {
       const besluitUri = this.getBesluitFromVerkeersSnippet(richNode.rdfaBlocks);
