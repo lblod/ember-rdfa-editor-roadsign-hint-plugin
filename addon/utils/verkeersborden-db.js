@@ -1,6 +1,6 @@
 import fetch from 'fetch';
 
-const SPARQL_ENDPOINT = 'http://localhost/sparql';
+const SPARQL_ENDPOINT = 'https://centrale-vindplaats.lblod.info/sparql';
 
 class Verkeersbordconcept {
   type = "https://data.vlaanderen.be/ns/mobiliteit#Verkeersbordconcept"
@@ -254,7 +254,7 @@ export async function loadMaatregelconceptcombinatieTreeFromVerkeersbordconcepte
     maatregelenCombos[row.mcUri.value].maatregelconceptUris.push(row.mUri.value);
   }
 
-  //relations might met provided duplicate, they can be flattend here
+  //relations might be provided duplicate, they can be flattend here
   Object.values(borden).forEach(b => b.maatregelconceptUris = b.maatregelconceptUris.uniq());
   Object.values(maatregelen).forEach(m => m.verkeersbordconceptUris = m.verkeersbordconceptUris.uniq());
   Object.values(maatregelen).forEach(m => m.maatregelconceptcombinatieUris = m.maatregelconceptcombinatieUris.uniq());
@@ -267,8 +267,6 @@ export async function loadMaatregelconceptcombinatieTreeFromVerkeersbordconcepte
     maatregelconceptcombinaties: maatregelenCombos
   };
 }
-
-
 
 async function executeCountQuery(query) {
   const response = await executeQuery(query);
